@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Battle - Final Title Fix</title>
+    <style>
+        :root {
+            --p1-color: #3498db;
+            --p2-color: #e74c3c;
+            --accent: #f1c40f;
+            --zombie-green: #50c878;
+            --blood-red: #c0392b;
+            --win-color: #ffd700;
+        }
+        
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; touch-action: none;
+            display: flex; flex-direction: column;
+            height: 100vh; height: 100dvh; width: 100vw;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        /* --- SPLASH SCREEN --- */
+        #splash-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.85), rgba(20, 5, 5, 0.9)), url('https://i.imgur.com/iuiNcXo.jpeg');
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 999; color: white; text-align: center;
+            transition: opacity 0.8s ease-out;
+        }
+        .splash-content { animation: slideUp 1.2s ease-out; padding: 20px; }
+        .created-by { 
+            font-size: clamp(0.8rem, 2vw, 1.2rem); letter-spacing: 4px; text-transform: uppercase; 
+            margin-bottom: 5px; color: #aaa; font-weight: bold; text-shadow: 2px 2px 0 #000;
+        }
+        .creator-name { 
+            font-size: clamp(1.5rem, 5vw, 3rem); font-weight: 900; margin: 15px 0; 
+            background: -webkit-linear-gradient(#76ff03, #2e7d32); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 5px rgba(118, 255, 3, 0.5));
+            font-family: 'Courier New', Courier, monospace; letter-spacing: -1px;
+        }
+        .creator-title { 
+            font-size: clamp(0.8rem, 3vw, 1.2rem); font-weight: 600; color: #fff;
+            margin-bottom: 40px; text-transform: uppercase; letter-spacing: 1px;
+            text-shadow: 0 0 10px #c0392b; border-top: 2px solid #c0392b; border-bottom: 2px solid #c0392b;
+            padding: 10px 20px; display: inline-block; background: rgba(0,0,0,0.5);
+        }
+        .tap-to-start { 
+            margin-top: 20px; font-size: 1.2rem; color: #f1c40f; font-weight: bold;
+            animation: pulse 1.5s infinite; cursor: pointer; padding: 15px 40px; 
+            background: #c0392b; border-radius: 50px; border: 3px solid #fff; 
+            box-shadow: 0 0 20px rgba(192, 57, 43, 0.6);
+        }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(0.95); } 50% { transform: scale(1.05); } 100% { transform: scale(0.95); } }
+
+        /* --- MENU SCREEN --- */
+        #menu-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://i.imgur.com/0xd5xjx.jpeg');
+            background-size: cover; background-position: center;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: flex-start;
+            z-index: 100; transition: opacity 0.5s;
+            padding: 20px 10px;
+        }
+
+        /* PERBAIKAN JUDUL */
+        .title { 
+            /* Ukuran Jumbo Diperbesar */
+            font-size: clamp(3.5rem, 10vw, 6rem); 
+            color: var(--accent); 
+            /* Jarak Atas Ditambah (Lebih ke bawah) */
+            margin-top: 12vh; 
+            margin-bottom: 10px; text-align: center; 
+            text-transform: uppercase; letter-spacing: 3px; font-weight: 900;
+            /* Efek Bayangan Lebih Kuat */
+            text-shadow: 5px 5px 0px #000, 0 0 25px rgba(241, 196, 15, 0.9);
+            flex-shrink: 0;
+            line-height: 1;
+            z-index: 10;
+        }
+        .subtitle {
+            /* Subjudul Diperbesar Sedikit */
+            font-size: 0.5em; 
+            color: white; text-shadow: 3px 3px 0 #000; display: block; margin-top: 10px; font-weight: 400; letter-spacing: 5px;
+        }
+
+        .menu-step {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 100%; 
+            animation: fadeIn 0.5s;
+            flex-grow: 1;
+        }
+        @keyframes fadeIn { from {opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
+        .hidden { display: none !important; }
+
+        /* HEADER IMAGE "Pilih Mode" */
+        .mode-header-img {
+            width: auto; height: 12vh; min-height: 60px; max-height: 150px;
+            margin-bottom: 2vh; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.8));
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
+
+        /* WADAH TOMBOL PLAYER */
+        .mode-selection-container {
+            display: flex; flex-direction: row; gap: 20px;
+            justify-content: center; align-items: center; flex-wrap: wrap;
+            width: 100%;
+        }
+        .mode-btn-img {
+            height: 25vh; min-height: 140px; max-height: 300px; width: auto; object-fit: contain;
+            cursor: pointer; transition: transform 0.2s, filter 0.2s;
+            filter: drop-shadow(0 8px 5px rgba(0,0,0,0.6));
+            -webkit-tap-highlight-color: transparent;
+        }
+        .mode-btn-img:hover { transform: scale(1.1); filter: drop-shadow(0 12px 8px rgba(0,0,0,0.7)) brightness(1.1); }
+        .mode-btn-img:active { transform: scale(0.95); filter: drop-shadow(0 4px 2px rgba(0,0,0,0.5)); }
+
+        /* WADAH DIFFICULTY (HORIZONTAL) */
+        .diff-selection-container {
+            display: flex; flex-direction: row; gap: 25px;
+            justify-content: center; align-items: center; flex-wrap: wrap;
+            width: 100%;
+        }
+        .diff-btn-img {
+            height: 18vh; min-height: 120px; max-height: 250px; width: auto;
+            cursor: pointer; transition: transform 0.2s, filter 0.2s;
+            filter: drop-shadow(0 8px 5px rgba(0,0,0,0.5));
+            -webkit-tap-highlight-color: transparent;
+        }
+        .diff-btn-img:hover { transform: scale(1.1) translateY(-5px); filter: drop-shadow(0 12px 8px rgba(0,0,0,0.6)) brightness(1.1); }
+        .diff-btn-img:active { transform: scale(0.95); filter: drop-shadow(0 4px 2px rgba(0,0,0,0.5)); }
+
+        /* Tombol Menu Umum */
+        .menu-btn {
+            background: rgba(255, 255, 255, 0.95); color: #333; border: none; 
+            padding: 12px 30px; margin: 10px; font-size: 1.1rem; 
+            border-radius: 50px; cursor: pointer; transition: 0.2s; 
+            width: auto; min-width: 150px; box-shadow: 0 4px 0 rgba(0,0,0,0.3); font-weight: bold;
+        }
+        .menu-btn:active { transform: translateY(3px); box-shadow: none; }
+        .menu-btn:hover { filter: brightness(1.1); transform: scale(1.02); }
+
+        .btn-short { background: #1abc9c; color: white; border: 3px solid #fff; }
+        .btn-mid { background: #3498db; color: white; border: 3px solid #fff; }
+        .btn-long { background: #9b59b6; color: white; border: 3px solid #fff; }
+
+        .topic-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 95%; max-width: 500px; }
+        .topic-btn {
+            background: rgba(52, 73, 94, 0.95); color: white; padding: 15px; font-size: 1rem;
+            border-radius: 12px; border: 2px solid #7f8c8d; cursor: pointer;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.4); font-weight: bold;
+        }
+        .topic-btn:hover { border-color: var(--accent); background: rgba(44, 62, 80, 1); }
+
+        /* --- GAME LAYOUT --- */
+        #game-container { display: flex; width: 100%; height: 100%; }
+        .player-panel {
+            position: relative; display: flex; flex-direction: column;
+            border-right: 3px solid #000; overflow: hidden; height: 100%;
+        }
+        .full-width { width: 100%; border: none; }
+        .half-width { width: 50%; }
+
+        .canvas-wrapper {
+            position: relative; flex-grow: 1; width: 100%;
+            background: url('https://i.imgur.com/iuiNcXo.jpeg');
+            background-size: cover; background-position: center bottom;
+            border-bottom: 4px solid #000; overflow: hidden;
+        }
+        .canvas-wrapper::before { content: ''; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0, 0, 0, 0.2); pointer-events: none; }
+        canvas { display: block; width: 100%; height: 100%; position: relative; z-index: 1; }
+
+        /* HUD */
+        .hud-container {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: flex; justify-content: space-between; pointer-events: none; z-index: 10;
+        }
+        .hud-box {
+            background: rgba(0,0,0,0.7); color: white;
+            padding: 6px 12px; border-radius: 8px; font-weight: bold;
+            font-size: clamp(0.8rem, 1.2vw, 1.1rem);
+            border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px);
+        }
+        .hearts { color: #e74c3c; letter-spacing: 2px; }
+
+        /* KEYPAD */
+        .keypad-area {
+            height: 35%; max-height: 300px; min-height: 180px;
+            background: #222; padding: 5px; padding-bottom: env(safe-area-inset-bottom, 10px);
+            display: flex; justify-content: center; align-items: center;
+            border-top: 3px solid #000; box-sizing: border-box; width: 100%;
+        }
+        .keypad-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr 0.8fr;
+            grid-template-rows: repeat(4, 1fr); gap: 5px;
+            width: 100%; max-width: 450px; height: 100%;
+        }
+        .key-btn {
+            background: #444; color: white; border: none; border-radius: 8px;
+            font-size: clamp(1.2rem, 3vh, 2rem); font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 0 #111; display: flex; justify-content: center; align-items: center;
+            position: relative; touch-action: manipulation;
+        }
+        .key-btn.active { transform: translateY(4px); box-shadow: 0 0 0 #111; background: #666; }
+        .p1-keys .key-btn.active { background: var(--p1-color); }
+        .p2-keys .key-btn.active { background: var(--p2-color); }
+        .btn-fire { grid-column: 4; grid-row: 2 / span 3; background: #e67e22; font-size: 1.8rem; }
+        .btn-clr { grid-column: 4; grid-row: 1; background: #c0392b; }
+        .btn-neg { grid-column: 1; grid-row: 4; background: #d35400; color: #fff; }
+        .btn-0 { grid-column: 2 / span 2; grid-row: 4; }
+
+        .input-display {
+            position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.85); color: var(--accent);
+            padding: 5px 25px; border-radius: 12px;
+            font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: bold;
+            border: 3px solid var(--accent); min-width: 90px; text-align: center;
+            z-index: 5; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        /* MODALS */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            color: white; z-index: 50; text-align: center; backdrop-filter: blur(5px);
+        }
+        .victory-title {
+            font-size: clamp(3rem, 6vw, 5rem); color: var(--win-color);
+            text-transform: uppercase; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 4px 4px 0 #000;
+            margin: 0; animation: bounce 1s infinite alternate;
+        }
+        .defeat-title {
+            font-size: clamp(3rem, 6vw, 5rem); color: #e74c3c;
+            text-shadow: 4px 4px 0 #000; margin: 0;
+        }
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
+
+        .restart-btn-in-game {
+            background: #27ae60; color: white; border: 4px solid white;
+            padding: 15px 40px; font-size: 1.5rem; border-radius: 50px;
+            cursor: pointer; margin-top: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            font-weight: bold; pointer-events: auto;
+        }
+        .restart-btn-in-game:hover { transform: scale(1.05); }
+
+        #confetti-canvas {
+            position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 90;
+        }
+
+        @media (max-width: 600px) { 
+            .topic-grid { grid-template-columns: 1fr; }
+            .mode-selection-container { gap: 10px; }
+            .mode-btn-img { height: 20vh; }
+            .diff-selection-container { gap: 10px; }
+            .diff-btn-img { height: 15vh; } 
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AUDIO LIBRARY -->
+    <audio id="bgm-menu" loop>
+        <source src="https://github.com/ilindekguru/Lagulagu/raw/refs/heads/main/Plants%20vs%20Zombies%20Soundtrack.%20%5BMain%20Menu%5D.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="bgm-game" loop>
+        <source src="https://github.com/ilindekguru/Lagulagu/raw/refs/heads/main/Plants%20vs%20Zombies%20Music%20-%20Daytime%20in%20Front%20Yard%20(Horde).mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-win-source" preload="auto">
+        <source src="https://github.com/ilindekguru/Lagulagu/raw/refs/heads/main/brass-fanfare-with-timpani-and-winchimes-reverberated-146260.mp3" type="audio/mpeg">
+    </audio>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen" onclick="enterGame()">
+        <div class="splash-content">
+            <div class="created-by">Created by</div>
+            <div class="creator-name">ILINING USWATUUN KHASANAH</div>
+            <div class="creator-title">Duta Teknologi Jawa Tengah 2024</div>
+            <div class="tap-to-start">TAP TO START ▶</div>
+        </div>
+    </div>
+
+    <!-- MENU UTAMA -->
+    <div id="menu-screen">
+        <div class="title">MATH BATTLE<br><span class="subtitle">Zombie City</span></div>
+        
+        <!-- STEP 1: MODE SELECT -->
+        <div id="step-player" class="menu-step">
+            <img src="https://i.imgur.com/evTtOoQ.png" alt="Pilih Mode" class="mode-header-img">
+            <div class="mode-selection-container">
+                <img src="https://i.imgur.com/D3U5exB.png" class="mode-btn-img" onclick="initAudio(); goToDifficulty(1)" alt="1 Player Mode">
+                <img src="https://i.imgur.com/WdG957V.png" class="mode-btn-img" onclick="initAudio(); goToDifficulty(2)" alt="2 Player Mode">
+            </div>
+        </div>
+
+        <!-- STEP 2: DIFFICULTY SELECT -->
+        <div id="step-difficulty" class="menu-step hidden">
+            <h2 style="color:#eee; margin-bottom:20px; font-size:1.5rem; text-shadow:2px 2px 2px #000;">Tingkat Kesulitan</h2>
+            <div class="diff-selection-container">
+                <img src="https://i.imgur.com/ambiptY.png" class="diff-btn-img" onclick="handleDifficultySelect('easy')" alt="Mudah">
+                <img src="https://i.imgur.com/2TiATVL.png" class="diff-btn-img" onclick="handleDifficultySelect('medium')" alt="Sedang">
+                <img src="https://i.imgur.com/4uX7veW.png" class="diff-btn-img" onclick="handleDifficultySelect('hard')" alt="Sulit">
+            </div>
+            <button class="menu-btn" style="width:auto; padding:10px 20px; margin-top:30px;" onclick="backToPlayer()">Kembali</button>
+        </div>
+
+        <div id="step-target" class="menu-step hidden">
+            <h2 style="color:#eee; margin-bottom:15px; font-size:1.5rem; text-shadow:2px 2px 2px #000;">Target Kemenangan</h2>
+            <button class="menu-btn btn-short" onclick="goToTopicFromTarget(100)">CEPAT (100 Poin)</button>
+            <button class="menu-btn btn-mid" onclick="goToTopicFromTarget(250)">SEDANG (250 Poin)</button>
+            <button class="menu-btn btn-long" onclick="goToTopicFromTarget(500)">LAMA (500 Poin)</button>
+            <button class="menu-btn" style="width:auto; padding:10px 20px; margin-top:20px;" onclick="backToDifficulty()">Kembali</button>
+        </div>
+
+        <div id="step-topic" class="menu-step hidden">
+            <h2 style="color:#eee; margin-bottom:15px; font-size:1.5rem; text-shadow:2px 2px 2px #000;">Pilih Materi</h2>
+            <div class="topic-grid">
+                <button class="topic-btn" onclick="startGame('add')">Penjumlahan (+)</button>
+                <button class="topic-btn" onclick="startGame('sub')">Pengurangan (-)</button>
+                <button class="topic-btn" onclick="startGame('mul')">Perkalian (×)</button>
+                <button class="topic-btn" onclick="startGame('div')">Pembagian (÷)</button>
+                <button class="topic-btn" onclick="startGame('mix')">Campuran (+ - × ÷)</button>
+                <button class="topic-btn" onclick="startGame('int')">Bilangan Bulat (+/-)</button>
+            </div>
+            <button class="menu-btn" style="width:auto; padding:10px 20px; margin-top:20px;" onclick="backToTargetOrDiff()">Kembali</button>
+        </div>
+    </div>
+
+    <!-- GAME CONTAINER -->
+    <div id="game-container" style="display:none;">
+        <div id="p1-panel" class="player-panel full-width">
+            <div class="canvas-wrapper">
+                <div class="hud-container">
+                    <div class="hud-box">Target: <span id="p1-target">100</span></div>
+                    <div class="hud-box">Skor: <span id="p1-score">0</span></div>
+                    <div class="hud-box hearts" id="p1-hearts">❤️❤️❤️</div>
+                </div>
+                <canvas id="canvas1"></canvas>
+                <div class="input-display" id="p1-display">?</div>
+                <div class="modal-overlay" id="p1-modal">
+                    <h2 id="p1-modal-title" class="victory-title">VICTORY!</h2>
+                    <p style="font-size: 1.2rem;">Skor Akhir: <span id="p1-final">0</span></p>
+                    <button class="restart-btn-in-game" onpointerdown="backToMenu()">MENU UTAMA</button>
+                </div>
+            </div>
+            <div class="keypad-area p1-keys">
+                <div class="keypad-grid">
+                    <button class="key-btn" data-val="7">7</button> <button class="key-btn" data-val="8">8</button> <button class="key-btn" data-val="9">9</button> <button class="key-btn btn-clr" data-action="clear">⌫</button>
+                    <button class="key-btn" data-val="4">4</button> <button class="key-btn" data-val="5">5</button> <button class="key-btn" data-val="6">6</button> <button class="key-btn btn-fire" data-action="fire">🔥</button>
+                    <button class="key-btn" data-val="1">1</button> <button class="key-btn" data-val="2">2</button> <button class="key-btn" data-val="3">3</button>
+                    <button class="key-btn btn-neg" data-val="-">(-)</button> <button class="key-btn btn-0" data-val="0">0</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="p2-panel" class="player-panel half-width" style="display: none;">
+            <div class="canvas-wrapper">
+                <div class="hud-container">
+                    <div class="hud-box">Skor: <span id="p2-score">0</span></div>
+                    <div class="hud-box hearts" id="p2-hearts">❤️❤️❤️</div>
+                </div>
+                <canvas id="canvas2"></canvas>
+                <div class="input-display" id="p2-display">?</div>
+                <div class="modal-overlay" id="p2-modal">
+                    <h2 id="p2-modal-title" class="victory-title">VICTORY!</h2>
+                    <p style="font-size: 1.2rem;">Skor Akhir: <span id="p2-final">0</span></p>
+                    <button class="restart-btn-in-game" onpointerdown="backToMenu()">MENU UTAMA</button>
+                </div>
+            </div>
+            <div class="keypad-area p2-keys">
+                <div class="keypad-grid">
+                    <button class="key-btn" data-val="7">7</button> <button class="key-btn" data-val="8">8</button> <button class="key-btn" data-val="9">9</button> <button class="key-btn btn-clr" data-action="clear">⌫</button>
+                    <button class="key-btn" data-val="4">4</button> <button class="key-btn" data-val="5">5</button> <button class="key-btn" data-val="6">6</button> <button class="key-btn btn-fire" data-action="fire">🔥</button>
+                    <button class="key-btn" data-val="1">1</button> <button class="key-btn" data-val="2">2</button> <button class="key-btn" data-val="3">3</button>
+                    <button class="key-btn btn-neg" data-val="-">(-)</button> <button class="key-btn btn-0" data-val="0">0</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO SYSTEM ---
+        const bgmMenu = document.getElementById('bgm-menu');
+        const bgmGame = document.getElementById('bgm-game');
+        
+        const SHOOT_URL = "https://github.com/ilindekguru/Lagulagu/raw/refs/heads/main/alien-ray-gun-90345.mp3";
+        const WIN_URL = "https://github.com/ilindekguru/Lagulagu/raw/refs/heads/main/brass-fanfare-with-timpani-and-winchimes-reverberated-146260.mp3";
+
+        let audioStarted = false;
+
+        function initAudio() {
+            if (!audioStarted) {
+                bgmMenu.volume = 0.5; bgmGame.volume = 0.3;
+                bgmMenu.play().catch(e => console.log("Audio autoplay prevented"));
+                new Audio(SHOOT_URL); 
+                new Audio(WIN_URL);
+                audioStarted = true;
+            }
+        }
+
+        function enterGame() {
+            initAudio();
+            const splash = document.getElementById('splash-screen');
+            const menu = document.getElementById('menu-screen');
+            
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+                menu.style.display = 'flex';
+                bgmMenu.play().catch(()=>{}); // Force play menu music
+            }, 800);
+        }
+
+        function switchMusic(toGame) {
+            if (toGame) { bgmMenu.pause(); bgmMenu.currentTime = 0; bgmGame.play().catch(()=>{}); } 
+            else { bgmGame.pause(); bgmGame.currentTime = 0; bgmMenu.play().catch(()=>{}); }
+        }
+        function playShootSfx() { const sfx = new Audio(SHOOT_URL); sfx.volume = 0.6; sfx.play().catch(e => {}); }
+        function playWinSfx() { const sfx = new Audio(WIN_URL); sfx.volume = 1.0; sfx.play().catch(e => {}); }
+        function speakVictory() {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance("Selamat! Kamu Menang!");
+                utterance.lang = 'id-ID'; utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // --- CONFETTI ---
+        const confCanvas = document.getElementById('confetti-canvas');
+        const confCtx = confCanvas.getContext('2d');
+        let confettis = [];
+        function resizeConfetti() { confCanvas.width = window.innerWidth; confCanvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeConfetti); resizeConfetti();
+        function fireConfetti() {
+            for(let i=0; i<100; i++) {
+                confettis.push({ x: Math.random()*confCanvas.width, y: Math.random()*confCanvas.height-confCanvas.height, vx: (Math.random()-0.5)*5, vy: Math.random()*5+2, c: `hsl(${Math.random()*360}, 100%, 50%)`, size: Math.random()*10+5, rot: Math.random()*360, vRot: (Math.random()-0.5)*10 });
+            }
+        }
+        function updateConfetti() {
+            confCtx.clearRect(0,0,confCanvas.width, confCanvas.height);
+            for(let i=0; i<confettis.length; i++) {
+                let p = confettis[i]; p.y += p.vy; p.x += p.vx; p.rot += p.vRot; if(p.y > confCanvas.height) p.y = -10;
+                confCtx.save(); confCtx.translate(p.x, p.y); confCtx.rotate(p.rot * Math.PI/180); confCtx.fillStyle = p.c; confCtx.fillRect(-p.size/2, -p.size/2, p.size, p.size); confCtx.restore();
+            }
+            if(confettis.length > 0) requestAnimationFrame(updateConfetti);
+        }
+
+        // --- ASSETS ---
+        const ZOMBIE_URLS = ["https://i.imgur.com/Mhhc189.png", "https://i.imgur.com/seG3o8U.png", "https://i.imgur.com/9a48aOv.png", "https://i.imgur.com/P5EOQjy.png", "https://i.imgur.com/lW5LslS.png", "https://i.imgur.com/ezdXfwx.png", "https://i.imgur.com/cxIJKKs.png"];
+        const zombieImages = []; ZOMBIE_URLS.forEach(url => { const img = new Image(); img.src = url; zombieImages.push(img); });
+
+        // --- GLOBALS ---
+        let gameMode = 1; let difficulty = 'medium'; let topic = 'add'; let isRunning = false;
+        let p1Game, p2Game; let animId; let targetScore = 250;
+
+        // --- NAVIGATION ---
+        function goToDifficulty(mode) { gameMode = mode; document.getElementById('step-player').classList.add('hidden'); document.getElementById('step-difficulty').classList.remove('hidden'); }
+        function backToPlayer() { document.getElementById('step-difficulty').classList.add('hidden'); document.getElementById('step-player').classList.remove('hidden'); }
+        function handleDifficultySelect(diff) { difficulty = diff; document.getElementById('step-difficulty').classList.add('hidden'); if(gameMode===1) document.getElementById('step-target').classList.remove('hidden'); else document.getElementById('step-topic').classList.remove('hidden'); }
+        function backToDifficulty() { document.getElementById('step-target').classList.add('hidden'); document.getElementById('step-difficulty').classList.remove('hidden'); }
+        function goToTopicFromTarget(score) { targetScore = score; document.getElementById('step-target').classList.add('hidden'); document.getElementById('step-topic').classList.remove('hidden'); }
+        function backToTargetOrDiff() { document.getElementById('step-topic').classList.add('hidden'); if(gameMode===1)document.getElementById('step-target').classList.remove('hidden'); else document.getElementById('step-difficulty').classList.remove('hidden'); }
+
+        function startGame(selectedTopic) {
+            topic = selectedTopic;
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            switchMusic(true);
+
+            const p1 = document.getElementById('p1-panel'); const p2 = document.getElementById('p2-panel');
+            const targetEl = document.getElementById('p1-target');
+            if(gameMode === 1) { targetEl.parentElement.style.display = 'block'; targetEl.innerText = targetScore; } 
+            else { targetEl.parentElement.style.display = 'none'; }
+
+            if (gameMode === 2) { p1.className = 'player-panel half-width'; p2.style.display = 'flex'; } 
+            else { p1.className = 'player-panel full-width'; p2.style.display = 'none'; }
+
+            confettis = []; 
+            setTimeout(() => {
+                p1Game = new GameInstance('canvas1', 1); p1Game.resize();
+                if (gameMode === 2) { p2Game = new GameInstance('canvas2', 2); p2Game.resize(); }
+                setupMultiTouch();
+                isRunning = true; gameLoop();
+            }, 100);
+        }
+
+        function backToMenu() {
+            isRunning = false; cancelAnimationFrame(animId);
+            document.getElementById('p1-modal').style.display = 'none'; document.getElementById('p2-modal').style.display = 'none';
+            document.getElementById('game-container').style.display = 'none'; document.getElementById('menu-screen').style.display = 'flex';
+            document.getElementById('step-topic').classList.add('hidden'); document.getElementById('step-target').classList.add('hidden');
+            document.getElementById('step-difficulty').classList.add('hidden'); document.getElementById('step-player').classList.remove('hidden');
+            switchMusic(false); confettis = []; confCtx.clearRect(0,0,confCanvas.width, confCanvas.height);
+        }
+
+        function setupMultiTouch() {
+            const attachListeners = (selector, gameInstance) => {
+                const buttons = document.querySelectorAll(selector);
+                buttons.forEach(btn => {
+                    btn.onpointerdown = (e) => {
+                        e.preventDefault(); 
+                        btn.classList.add('active'); setTimeout(() => btn.classList.remove('active'), 100);
+                        const val = btn.getAttribute('data-val'); const action = btn.getAttribute('data-action');
+                        if (action === 'clear') gameInstance.clearInput();
+                        else if (action === 'fire') gameInstance.fire();
+                        else if (val !== null) gameInstance.inputNum(val);
+                    };
+                });
+            };
+            if (p1Game) attachListeners('.p1-keys .key-btn', p1Game);
+            if (p2Game) attachListeners('.p2-keys .key-btn', p2Game);
+        }
+
+        // --- GAME ENGINE ---
+        class GameInstance {
+            constructor(canvasId, pid) {
+                this.canvas = document.getElementById(canvasId); this.ctx = this.canvas.getContext('2d'); this.pid = pid;
+                this.elScore = document.getElementById(`p${pid}-score`); this.elHearts = document.getElementById(`p${pid}-hearts`);
+                this.elDisplay = document.getElementById(`p${pid}-display`); this.elModal = document.getElementById(`p${pid}-modal`);
+                this.elModalTitle = document.getElementById(`p${pid}-modal-title`); this.elFinal = document.getElementById(`p${pid}-final`);
+                
+                // RESET STATE
+                this.score = 0; 
+                this.level = 1; 
+                this.lives = 3; 
+                this.input = "";
+                
+                // RESET UI
+                this.elScore.innerText = "0";
+                this.elHearts.innerText = "❤️❤️❤️";
+                this.elDisplay.innerText = "?";
+                this.elDisplay.style.borderColor = "#f1c40f"; 
+                this.elDisplay.style.color = "#f1c40f";
+                this.elModal.style.display = 'none';
+
+                this.zombies = []; this.bullets = []; this.particles = []; this.lastSpawn = 0; this.isOver = false;
+                this.spawnRate = difficulty === 'easy' ? 4000 : (difficulty === 'medium' ? 3000 : 2000);
+                this.playerPos = { x: 0, y: 0 };
+            }
+            resize() {
+                const w = this.canvas.parentElement.clientWidth; const h = this.canvas.parentElement.clientHeight;
+                this.canvas.width = w; this.canvas.height = h; this.playerPos = { x: w/2, y: h - 50 }; 
+            }
+            update() {
+                if (this.isOver) return;
+                this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
+                this.drawPlayer();
+                const now = Date.now();
+                if (now - this.lastSpawn > this.spawnRate) { this.zombies.push(new Zombie(this.canvas.width, this.level)); this.lastSpawn = now; }
+                for (let i = this.zombies.length - 1; i >= 0; i--) {
+                    let z = this.zombies[i]; z.update(); z.draw(this.ctx);
+                    if (z.y > this.canvas.height - 40) {
+                        this.lives--; this.updateHearts(); this.createExplosion(z.x, z.y, 'red');
+                        this.zombies.splice(i, 1); if (this.lives <= 0) this.gameOver(false);
+                    }
+                }
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
+                    let b = this.bullets[i]; b.update(); b.draw(this.ctx);
+                    if(b.outOfBounds(this.canvas.width, this.canvas.height)) this.bullets.splice(i,1);
+                }
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    let p = this.particles[i]; p.update(); p.draw(this.ctx);
+                    if(p.life <= 0) this.particles.splice(i,1);
+                }
+            }
+            drawPlayer() {
+                const {x, y} = this.playerPos; this.ctx.fillStyle = this.pid === 1 ? '#3498db' : '#e74c3c';
+                this.ctx.beginPath(); this.ctx.arc(x, y + 20, 25, 0, Math.PI, true); this.ctx.fill();
+                this.ctx.fillStyle = "#ecf0f1"; this.ctx.fillRect(x-6, y-35, 12, 40);
+                this.ctx.fillStyle = "#2c3e50"; this.ctx.fillRect(x-8, y-35, 16, 8);
+            }
+            inputNum(val) {
+                if(this.isOver) return;
+                if(val === '-') { if(this.input === "") this.input = "-"; else if(this.input === "-") this.input = ""; } 
+                else { if(this.input.length < 5) this.input += val; }
+                this.updateDisplay();
+            }
+            clearInput() { this.input = ""; this.updateDisplay(); }
+            updateDisplay() {
+                this.elDisplay.innerText = this.input === "" ? "?" : this.input;
+                this.elDisplay.style.borderColor = "#f1c40f"; this.elDisplay.style.color = "#f1c40f";
+            }
+            fire() {
+                if(this.isOver || this.input === "" || this.input === "-") return;
+                const ans = parseInt(this.input); let hit = false;
+                this.zombies.sort((a,b) => b.y - a.y);
+                for(let i=0; i<this.zombies.length; i++) {
+                    if(this.zombies[i].answer === ans) {
+                        playShootSfx();
+                        this.bullets.push(new Bullet(this.playerPos.x, this.playerPos.y - 30, this.zombies[i].x, this.zombies[i].y));
+                        this.createExplosion(this.zombies[i].x, this.zombies[i].y, '#2ecc71');
+                        this.zombies.splice(i, 1); hit = true; this.score += 10;
+                        if(this.score % 50 === 0) {
+                            this.level++;
+                            let minRate = difficulty === 'hard' ? 800 : (difficulty === 'medium' ? 1200 : 2000);
+                            this.spawnRate = Math.max(minRate, this.spawnRate - 200);
+                        }
+                        this.elScore.innerText = this.score;
+                        if (gameMode === 1 && this.score >= targetScore) this.gameOver(true);
+                        this.elDisplay.style.borderColor = "#2ecc71"; this.elDisplay.style.color = "#2ecc71";
+                        setTimeout(() => this.updateDisplay(), 200); break;
+                    }
+                }
+                if(!hit) {
+                    this.elDisplay.style.borderColor = "#e74c3c"; this.elDisplay.style.color = "#e74c3c";
+                    setTimeout(() => this.updateDisplay(), 200);
+                }
+                this.input = "";
+            }
+            createExplosion(x,y,c) { for(let i=0; i<12; i++) this.particles.push(new Particle(x,y,c)); }
+            updateHearts() { this.elHearts.innerText = "❤️".repeat(this.lives); }
+            gameOver(isVictory) {
+                this.isOver = true; this.elFinal.innerText = this.score; this.elModal.style.display = 'flex';
+                if (isVictory) {
+                    this.elModalTitle.innerText = "VICTORY!"; this.elModalTitle.className = "victory-title";
+                    if (!confettis.length) { fireConfetti(); updateConfetti(); }
+                } else {
+                    this.elModalTitle.innerText = "DEFEAT"; this.elModalTitle.className = "defeat-title";
+                }
+                handleGlobalEnd(this.pid, isVictory);
+            }
+        }
+
+        // --- ENTITIES ---
+        class Zombie {
+            constructor(canvasW, level) {
+                this.r = 30; this.x = Math.random() * (canvasW - 2*this.r) + this.r; this.y = -60;
+                this.image = zombieImages[Math.floor(Math.random() * zombieImages.length)];
+                let baseSpeed = difficulty === 'easy' ? 0.3 : (difficulty === 'hard' ? 1.0 : 0.5);
+                this.speed = baseSpeed + (level * 0.05); this.wiggle = Math.random() * 100;
+                this.generateProblem(level);
+            }
+            generateProblem(level) {
+                let diffMult = difficulty === 'easy' ? 0.5 : (difficulty === 'hard' ? 2.0 : 1);
+                let a, b, op = topic === 'mix' ? ['add','sub','mul','div'][Math.floor(Math.random()*4)] : topic;
+                let range = Math.floor((5 * level * diffMult) + (difficulty === 'hard' ? 20 : 5));
+                if (op === 'add') { a=r(range)+2; b=r(range)+2; this.text=`${a}+${b}`; this.answer=a+b; } 
+                else if (op === 'sub') { a=r(range*1.5)+5; b=r(a); this.text=`${a}-${b}`; this.answer=a-b; }
+                else if (op === 'mul') { let m=difficulty==='easy'?5:9; a=r(m)+2; b=r(m)+2; this.text=`${a}×${b}`; this.answer=a*b; }
+                else if (op === 'div') { b=r(9)+2; let res=r(10)+1; a=b*res; this.text=`${a}÷${b}`; this.answer=res; }
+                else if (op === 'int') { let l=15; a=r(l*2)-l; b=r(l*2)-l; this.text=Math.random()>0.5?`${a}+${b<0?`(${b})`:b}`:`${a}-${b<0?`(${b})`:b}`; this.answer=eval(this.text.replace('×','*').replace('÷','/').replace(')(',')-(')); }
+            }
+            update() { this.y += this.speed; this.x += Math.sin((this.y + this.wiggle) / 40) * 0.5; if(this.x<30)this.x=30; }
+            draw(ctx) {
+                if(this.image && this.image.complete) ctx.drawImage(this.image, this.x-this.r, this.y-this.r, this.r*2, this.r*2);
+                else { ctx.fillStyle='#27ae60'; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); }
+                ctx.fillStyle="rgba(255,255,255,0.95)"; ctx.shadowColor="rgba(0,0,0,0.5)"; ctx.shadowBlur=4;
+                ctx.beginPath(); ctx.roundRect(this.x-55,this.y-(this.r*2.2),110,32,8); ctx.fill();
+                ctx.shadowBlur=0; ctx.strokeStyle="#2c3e50"; ctx.lineWidth=2; ctx.stroke();
+                ctx.fillStyle="#2c3e50"; ctx.font="bold 20px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
+                ctx.fillText(this.text, this.x, this.y-(this.r*2.2)+16);
+            }
+        }
+        function r(n) { return Math.floor(Math.random()*n); }
+        class Bullet {
+            constructor(x, y, tx, ty) { this.x=x; this.y=y; const dx=tx-x; const dy=ty-y; const dist=Math.sqrt(dx*dx+dy*dy); this.vx=(dx/dist)*25; this.vy=(dy/dist)*25; }
+            update() { this.x+=this.vx; this.y+=this.vy; }
+            draw(ctx) { ctx.fillStyle='#f1c40f'; ctx.beginPath(); ctx.arc(this.x,this.y,6,0,Math.PI*2); ctx.fill(); }
+            outOfBounds(w,h) { return this.y<-50||this.x<-50||this.x>w+50; }
+        }
+        class Particle {
+            constructor(x, y, c) { this.x=x; this.y=y; this.c=c; this.life=1; this.vx=(Math.random()-0.5)*12; this.vy=(Math.random()-0.5)*12; }
+            update() { this.x+=this.vx; this.y+=this.vy; this.life-=0.05; }
+            draw(ctx) { ctx.globalAlpha=Math.max(0,this.life); ctx.fillStyle=this.c; ctx.beginPath(); ctx.arc(this.x,this.y,5,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+        }
+
+        // --- GLOBAL LOGIC ---
+        function handleGlobalEnd(pidWhoEnded, isVictory) {
+            if (gameMode === 1) {
+                if (isVictory) { isRunning = false; cancelAnimationFrame(animId); bgmGame.pause(); playWinSfx(); speakVictory(); } 
+                else { isRunning = false; cancelAnimationFrame(animId); }
+            }
+            else if (gameMode === 2) {
+                if (!isVictory) {
+                    const winnerId = pidWhoEnded === 1 ? 2 : 1;
+                    isRunning = false; cancelAnimationFrame(animId);
+                    if (winnerId === 1) { p1Game.gameOver(true); p2Game.isOver = true; } 
+                    else { p2Game.gameOver(true); p1Game.isOver = true; }
+                    bgmGame.pause(); playWinSfx(); speakVictory();
+                }
+            }
+        }
+
+        function gameLoop() { if(!isRunning) return; p1Game.update(); if(gameMode===2)p2Game.update(); animId=requestAnimationFrame(gameLoop); }
+        window.addEventListener('resize', () => { if(p1Game) p1Game.resize(); if(p2Game) p2Game.resize(); });
+        window.addEventListener('keydown', (e) => {
+            if(!isRunning) return;
+            if((e.key>='0'&&e.key<='9')||e.key==='-') if(p1Game) p1Game.inputNum(e.key);
+            if(e.key==='Backspace') if(p1Game) p1Game.clearInput();
+            if(e.key==='Enter') if(p1Game) p1Game.fire();
+        });
+        if (!CanvasRenderingContext2D.prototype.roundRect) { CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) { this.rect(x,y,w,h); return this; } }
+    </script>
+</body>
+</html>
