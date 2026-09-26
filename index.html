@@ -148,6 +148,24 @@
         .diff-btn-img:hover { transform: scale(1.1) translateY(-5px); filter: drop-shadow(0 12px 8px rgba(0,0,0,0.6)) brightness(1.1); }
         .diff-btn-img:active { transform: scale(0.95); filter: drop-shadow(0 4px 2px rgba(0,0,0,0.5)); }
 
+        /* PENGATURAN KECEPATAN ZOMBIE */
+        .speed-group {
+            display: flex; gap: 10px; align-items: center; justify-content: center;
+            flex-wrap: wrap; margin-top: 4vh;
+        }
+        .speed-label {
+            color: #eee; font-weight: bold; text-shadow: 2px 2px 0 #000;
+            font-size: 1rem; letter-spacing: 1px;
+        }
+        .speed-btn {
+            background: rgba(52, 73, 94, 0.9); color: #ddd; border: 2px solid #7f8c8d;
+            border-radius: 50px; padding: 8px 22px; font-weight: bold; font-size: 0.95rem;
+            cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.4); transition: 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .speed-btn:hover { border-color: var(--accent); color: #fff; }
+        .speed-btn.aktif { background: var(--accent); color: #222; border-color: #fff; }
+
         /* Tombol Menu Umum */
         .menu-btn {
             background: rgba(255, 255, 255, 0.95); color: #333; border: none; 
@@ -315,6 +333,12 @@
                 <img src="assets/btn-sedang.png" class="diff-btn-img" onclick="handleDifficultySelect('medium')" alt="Sedang">
                 <img src="assets/btn-sulit.png" class="diff-btn-img" onclick="handleDifficultySelect('hard')" alt="Sulit">
             </div>
+            <div class="speed-group">
+                <span class="speed-label">Kecepatan Zombie:</span>
+                <button class="speed-btn" data-k="0.5">Lambat</button>
+                <button class="speed-btn" data-k="0.75">Sedang</button>
+                <button class="speed-btn" data-k="1">Cepat</button>
+            </div>
             <button class="menu-btn" style="width:auto; padding:10px 20px; margin-top:30px;" onclick="backToPlayer()">Kembali</button>
         </div>
 
@@ -460,6 +484,15 @@
         // --- GLOBALS ---
         let gameMode = 1; let difficulty = 'medium'; let topic = 'add'; let isRunning = false;
         let p1Game, p2Game; let animId; let targetScore = 250; let pendingStart = null;
+        let kecepatanZombie = 0.75;   // pengali: 0.5 Lambat, 0.75 Sedang, 1 Cepat
+        try { const k = parseFloat(localStorage.getItem('nembak-zombi-kecepatan')); if (k >= 0.25 && k <= 2) kecepatanZombie = k; } catch (e) {}
+
+        function setKecepatanZombie(k) {
+            kecepatanZombie = k;
+            try { localStorage.setItem('nembak-zombi-kecepatan', String(k)); } catch (e) {}
+            document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('aktif', parseFloat(b.dataset.k) === k));
+        }
+        setKecepatanZombie(kecepatanZombie);   // tandai tombol aktif sesuai pilihan tersimpan
 
         // --- TRANSISI ANTAR LANGKAH MENU ---
         function gantiLangkah(dariId, keId) {
@@ -496,6 +529,7 @@
             else { p1.className = 'player-panel full-width'; p2.style.display = 'none'; }
 
             confettis = []; 
+            isRunning = false; cancelAnimationFrame(animId);   // hentikan loop lama bila masih berjalan
             if (pendingStart) { clearTimeout(pendingStart); }
             pendingStart = setTimeout(() => {
                 p1Game = new GameInstance('canvas1', 1); p1Game.resize();
@@ -588,14 +622,14 @@
                 const w = this.canvas.parentElement.clientWidth; const h = this.canvas.parentElement.clientHeight;
                 this.canvas.width = w; this.canvas.height = h; this.playerPos = { x: w/2, y: h - 50 }; 
             }
-            update() {
+            update(dt) {
                 if (this.isOver) return;
                 this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
                 this.drawPlayer();
                 const now = Date.now();
                 if (now - this.lastSpawn > this.spawnRate) { this.zombies.push(new Zombie(this.canvas.width, this.level)); this.lastSpawn = now; }
                 for (let i = this.zombies.length - 1; i >= 0; i--) {
-                    let z = this.zombies[i]; z.update(); z.draw(this.ctx);
+                    let z = this.zombies[i]; z.update(dt); z.draw(this.ctx);
                     if (z.y > this.canvas.height - 40) {
                         this.lives--; this.updateHearts(); this.createExplosion(z.x, z.y, 'red');
                         z.dead = true;
@@ -603,7 +637,7 @@
                     }
                 }
                 for (let i = this.bullets.length - 1; i >= 0; i--) {
-                    let b = this.bullets[i]; b.update();
+                    let b = this.bullets[i]; b.update(dt);
                     let kena = b.target && !b.target.dead && b.kenaTarget();
                     if (kena) {
                         // PELURU MENGHENAI ZOMBIE: zombie mati di titik ini
@@ -624,7 +658,7 @@
                     else b.draw(this.ctx);
                 }
                 for (let i = this.particles.length - 1; i >= 0; i--) {
-                    let p = this.particles[i]; p.update(); p.draw(this.ctx);
+                    let p = this.particles[i]; p.update(dt); p.draw(this.ctx);
                     if(p.life <= 0) this.particles.splice(i,1);
                 }
             }
@@ -695,8 +729,10 @@
             constructor(canvasW, level) {
                 this.r = 30; this.x = Math.random() * (canvasW - 2*this.r) + this.r; this.y = -60;
                 this.image = zombieImages[Math.floor(Math.random() * zombieImages.length)];
-                let baseSpeed = difficulty === 'easy' ? 0.3 : (difficulty === 'hard' ? 1.0 : 0.5);
-                this.speed = baseSpeed + (level * 0.05); this.wiggle = Math.random() * 100;
+                // kecepatan dasar dalam px per detik — dikalibrasi lebih pelan dari versi lama
+                let baseSpeed = difficulty === 'easy' ? 14 : (difficulty === 'hard' ? 45 : 26);
+                this.speed = (baseSpeed + (level * 3)) * kecepatanZombie;   // px/detik × pilihan pemain
+                this.wiggle = Math.random() * 100;
                 this.generateProblem(level);
             }
             generateProblem(level) {
@@ -709,7 +745,7 @@
                 else if (op === 'div') { b=r(9)+2; let res=r(10)+1; a=b*res; this.text=`${a}÷${b}`; this.answer=res; }
                 else if (op === 'int') { let l=15; a=r(l*2)-l; b=r(l*2)-l; if (Math.random() > 0.5) { this.text=`${a}+${b<0?`(${b})`:b}`; this.answer=a+b; } else { this.text=`${a}-${b<0?`(${b})`:b}`; this.answer=a-b; } }
             }
-            update() { this.y += this.speed; this.x += Math.sin((this.y + this.wiggle) / 40) * 0.5; if(this.x<30)this.x=30; }
+            update(dt) { const s = (dt || 16.7) / 1000; this.y += this.speed * s; this.x += Math.sin((this.y + this.wiggle) / 40) * 0.5; if(this.x<30)this.x=30; }
             draw(ctx) {
                 if(this.image && this.image.complete && this.image.naturalWidth > 0) ctx.drawImage(this.image, this.x-this.r, this.y-this.r, this.r*2, this.r*2);
                 else { ctx.fillStyle='#27ae60'; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); }
@@ -723,17 +759,15 @@
         function r(n) { return Math.floor(Math.random()*n); }
         class Bullet {
             constructor(x, y, target) {
-                this.x = x; this.y = y; this.target = target; this.speed = 25; this.arah();
+                this.x = x; this.y = y; this.target = target; this.speed = 1500;   // px per detik
+                this.arah();
             }
             arah() {
                 const dx = this.target.x - this.x, dy = this.target.y - this.y;
                 const dist = Math.sqrt(dx*dx + dy*dy) || 1;
                 this.vx = (dx / dist) * this.speed; this.vy = (dy / dist) * this.speed;
-            }
-            update() {
-                if (this.target && !this.target.dead) this.arah();   // mengejar zombie yang tetap berjalan
-                this.x += this.vx; this.y += this.vy;
-            }
+            }            update(dt) { if (this.target && !this.target.dead) this.arah();   // mengejar zombie yang tetap berjalan
+                const s = (dt || 16.7) / 1000; this.x += this.vx * s; this.y += this.vy * s; }
             kenaTarget() {
                 const dx = this.x - this.target.x, dy = this.y - this.target.y;
                 return Math.sqrt(dx*dx + dy*dy) < this.target.r + 6;   // peluru menyentuh badan zombie
@@ -742,8 +776,8 @@
             outOfBounds(w,h) { return this.y<-50||this.x<-50||this.x>w+50; }
         }
         class Particle {
-            constructor(x, y, c) { this.x=x; this.y=y; this.c=c; this.life=1; this.vx=(Math.random()-0.5)*12; this.vy=(Math.random()-0.5)*12; }
-            update() { this.x+=this.vx; this.y+=this.vy; this.life-=0.05; }
+            constructor(x, y, c) { this.x=x; this.y=y; this.c=c; this.life=1; this.vx=(Math.random()-0.5)*720; this.vy=(Math.random()-0.5)*720; }
+            update(dt) { const s = (dt || 16.7) / 1000; this.x+=this.vx*s; this.y+=this.vy*s; this.life-=3*s; }
             draw(ctx) { ctx.globalAlpha=Math.max(0,this.life); ctx.fillStyle=this.c; ctx.beginPath(); ctx.arc(this.x,this.y,5,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
         }
 
@@ -764,7 +798,14 @@
             }
         }
 
-        function gameLoop() { if(!isRunning) return; p1Game.update(); if(gameMode===2)p2Game.update(); animId=requestAnimationFrame(gameLoop); }
+        let _lastT = 0;
+        function gameLoop(now) {
+            if(!isRunning) return;
+            const dt = Math.min(50, (now || 0) - _lastT);   // ms sejak frame sebelumnya (dibatasi)
+            _lastT = now || 0;
+            p1Game.update(dt); if(gameMode===2)p2Game.update(dt);
+            animId=requestAnimationFrame(gameLoop);
+        }
         window.addEventListener('resize', () => { if(p1Game) p1Game.resize(); if(p2Game) p2Game.resize(); });
         window.addEventListener('keydown', (e) => {
             if(!isRunning) return;
