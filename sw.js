@@ -1,5 +1,5 @@
 /* Service Worker Nembak Zombi — cache-first agar game jalan offline penuh. */
-const CACHE = 'nembak-zombi-v5';
+const CACHE = 'nembak-zombi-v6';
 
 const ASSETS = [
   './',
@@ -19,7 +19,7 @@ const ASSETS = [
   './assets/btn-mudah.png',
   './assets/btn-sedang.png',
   './assets/btn-sulit.png',
-  './assets/header-mode.png',
+  './assets/header-pilih-mode.png',
   './assets/zombie1.png',
   './assets/zombie2.png',
   './assets/zombie3.png',
