@@ -214,6 +214,11 @@
             font-size: clamp(3rem, 6vw, 5rem); color: #e74c3c;
             text-shadow: 4px 4px 0 #000; margin: 0;
         }
+        .rekor-line {
+            font-size: 1.15rem; margin: 6px 0 0; color: #f7dc6f;
+            text-shadow: 2px 2px 0 #000; font-weight: bold;
+        }
+        .rekor-line.new { animation: bounce 1s infinite alternate; }
         @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
 
         .restart-btn-in-game {
@@ -309,6 +314,7 @@
                 <div class="modal-overlay" id="p1-modal">
                     <h2 id="p1-modal-title" class="victory-title">Menang</h2>
                     <p style="font-size: 1.2rem;">Skor Akhir: <span id="p1-final">0</span></p>
+                    <p class="rekor-line" id="p1-rekor"></p>
                     <button class="restart-btn-in-game" onpointerdown="backToMenu()">MENU UTAMA</button>
                 </div>
             </div>
@@ -477,7 +483,7 @@
                 this.canvas = document.getElementById(canvasId); this.ctx = this.canvas.getContext('2d'); this.pid = pid;
                 this.elScore = document.getElementById(`p${pid}-score`); this.elHearts = document.getElementById(`p${pid}-hearts`);
                 this.elDisplay = document.getElementById(`p${pid}-display`); this.elModal = document.getElementById(`p${pid}-modal`);
-                this.elModalTitle = document.getElementById(`p${pid}-modal-title`); this.elFinal = document.getElementById(`p${pid}-final`);
+                this.elModalTitle = document.getElementById(`p${pid}-modal-title`); this.elFinal = document.getElementById(`p${pid}-final`); this.elRekor = document.getElementById(`p${pid}-rekor`);
                 
                 // RESET STATE
                 this.score = 0; 
@@ -491,6 +497,7 @@
                 this.elDisplay.innerText = "?";
                 this.elDisplay.style.borderColor = "#f1c40f"; 
                 this.elDisplay.style.color = "#f1c40f";
+                this.elRekor.innerText = ""; this.elRekor.classList.remove('new');
                 this.elModal.style.display = 'none';
 
                 this.zombies = []; this.bullets = []; this.particles = []; this.lastSpawn = 0; this.isOver = false;
@@ -570,8 +577,18 @@
             }
             createExplosion(x,y,c) { for(let i=0; i<12; i++) this.particles.push(new Particle(x,y,c)); }
             updateHearts() { this.elHearts.innerText = "❤️".repeat(this.lives); }
+            updateRekorLine() {
+                if (gameMode !== 1 || !this.elRekor) return;
+                const kunci = 'nembak-zombi-rekor';
+                let rekor = 0;
+                try { rekor = parseInt(localStorage.getItem(kunci)) || 0; } catch (e) {}
+                let rekorBaru = false;
+                if (this.score > rekor) { rekor = this.score; rekorBaru = true; try { localStorage.setItem(kunci, String(rekor)); } catch (e) {} }
+                this.elRekor.innerText = rekorBaru ? `🏆 Rekor Baru: ${rekor} poin!` : `Rekor Tertinggi: ${rekor} poin`;
+                this.elRekor.classList.toggle('new', rekorBaru);
+            }
             gameOver(isVictory) {
-                this.isOver = true; this.elFinal.innerText = this.score; this.elModal.style.display = 'flex';
+                this.isOver = true; this.elFinal.innerText = this.score; this.elModal.style.display = 'flex'; this.updateRekorLine();
                 if (isVictory) {
                     this.elModalTitle.innerText = "Menang"; this.elModalTitle.className = "victory-title";
                     if (!confettis.length) { fireConfetti(); updateConfetti(); }
