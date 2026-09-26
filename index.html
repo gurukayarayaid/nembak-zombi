@@ -74,6 +74,7 @@
             font-size: clamp(0.85rem, 2.4vw, 1.15rem);
             text-shadow: 2px 2px 0 #000;
             z-index: 10;
+            animation: masuk 0.6s ease-out 0.3s both;
         }
         .rekor-menu.tampil { display: inline-block; }
 
@@ -84,6 +85,22 @@
             flex-grow: 1;
         }
         @keyframes fadeIn { from {opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
+        @keyframes masuk {
+            from { opacity: 0; transform: translateY(26px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .title { animation: masuk 0.7s ease-out both; }
+        .menu-step > * { animation: masuk 0.55s ease-out both; }
+        .menu-step > *:nth-child(1) { animation-delay: 0.08s; }
+        .menu-step > *:nth-child(2) { animation-delay: 0.16s; }
+        .menu-step > *:nth-child(3) { animation-delay: 0.24s; }
+        .menu-step > *:nth-child(4) { animation-delay: 0.32s; }
+        .menu-step > *:nth-child(5) { animation-delay: 0.40s; }
+        .menu-step > *:nth-child(6) { animation-delay: 0.48s; }
+        .menu-step > .mode-header-img { animation: masuk 0.55s ease-out both, float 3s ease-in-out 0.7s infinite; }
+        @media (prefers-reduced-motion: reduce) {
+            .title, .rekor-menu, .menu-step > * { animation: none !important; }
+        }
         .hidden { display: none !important; }
 
         /* HEADER IMAGE "Pilih Mode" */
