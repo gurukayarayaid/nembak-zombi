@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Math Battle - Final Title Fix</title>
+    <title>Nembak Zombi</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+    <link rel="shortcut icon" href="assets/favicon.ico">
     <style>
         :root {
             --p1-color: #3498db;
@@ -26,71 +29,31 @@
             user-select: none; -webkit-user-select: none;
         }
 
-        /* --- SPLASH SCREEN --- */
-        #splash-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(0,0,0,0.85), rgba(20, 5, 5, 0.9)), url('https://i.imgur.com/iuiNcXo.jpeg');
-            background-size: cover; background-position: center;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            z-index: 999; color: white; text-align: center;
-            transition: opacity 0.8s ease-out;
-        }
-        .splash-content { animation: slideUp 1.2s ease-out; padding: 20px; }
-        .created-by { 
-            font-size: clamp(0.8rem, 2vw, 1.2rem); letter-spacing: 4px; text-transform: uppercase; 
-            margin-bottom: 5px; color: #aaa; font-weight: bold; text-shadow: 2px 2px 0 #000;
-        }
-        .creator-name { 
-            font-size: clamp(1.5rem, 5vw, 3rem); font-weight: 900; margin: 15px 0; 
-            background: -webkit-linear-gradient(#76ff03, #2e7d32); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 5px rgba(118, 255, 3, 0.5));
-            font-family: 'Courier New', Courier, monospace; letter-spacing: -1px;
-        }
-        .creator-title { 
-            font-size: clamp(0.8rem, 3vw, 1.2rem); font-weight: 600; color: #fff;
-            margin-bottom: 40px; text-transform: uppercase; letter-spacing: 1px;
-            text-shadow: 0 0 10px #c0392b; border-top: 2px solid #c0392b; border-bottom: 2px solid #c0392b;
-            padding: 10px 20px; display: inline-block; background: rgba(0,0,0,0.5);
-        }
-        .tap-to-start { 
-            margin-top: 20px; font-size: 1.2rem; color: #f1c40f; font-weight: bold;
-            animation: pulse 1.5s infinite; cursor: pointer; padding: 15px 40px; 
-            background: #c0392b; border-radius: 50px; border: 3px solid #fff; 
-            box-shadow: 0 0 20px rgba(192, 57, 43, 0.6);
-        }
-        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes pulse { 0% { transform: scale(0.95); } 50% { transform: scale(1.05); } 100% { transform: scale(0.95); } }
-
         /* --- MENU SCREEN --- */
         #menu-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://i.imgur.com/0xd5xjx.jpeg');
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('assets/bg-city.jpeg');
             background-size: cover; background-position: center;
-            display: none; flex-direction: column;
+            display: flex; flex-direction: column;
             align-items: center; justify-content: flex-start;
             z-index: 100; transition: opacity 0.5s;
             padding: 20px 10px;
         }
 
-        /* PERBAIKAN JUDUL */
-        .title { 
-            /* Ukuran Jumbo Diperbesar */
-            font-size: clamp(3.5rem, 10vw, 6rem); 
+        /* Judul utama menu */
+        .title {
+            font-size: clamp(3.5rem, 10vw, 6rem);
             color: var(--accent); 
-            /* Jarak Atas Ditambah (Lebih ke bawah) */
-            margin-top: 12vh; 
+            margin-top: 12vh;
             margin-bottom: 10px; text-align: center; 
             text-transform: uppercase; letter-spacing: 3px; font-weight: 900;
-            /* Efek Bayangan Lebih Kuat */
             text-shadow: 5px 5px 0px #000, 0 0 25px rgba(241, 196, 15, 0.9);
             flex-shrink: 0;
             line-height: 1;
             z-index: 10;
         }
         .subtitle {
-            /* Subjudul Diperbesar Sedikit */
-            font-size: 0.5em; 
+            font-size: 0.5em;
             color: white; text-shadow: 3px 3px 0 #000; display: block; margin-top: 10px; font-weight: 400; letter-spacing: 5px;
         }
 
@@ -174,7 +137,7 @@
 
         .canvas-wrapper {
             position: relative; flex-grow: 1; width: 100%;
-            background: url('https://i.imgur.com/iuiNcXo.jpeg');
+            background: url('assets/bg-city.jpeg');
             background-size: cover; background-position: center bottom;
             border-bottom: 4px solid #000; overflow: hidden;
         }
@@ -271,38 +234,25 @@
 <body>
 
     <!-- AUDIO LIBRARY -->
-    <audio id="bgm-menu" loop>
-        <source src="https://github.com/ilindekguru/Lagulagu/raw/refs/heads/main/Plants%20vs%20Zombies%20Soundtrack.%20%5BMain%20Menu%5D.mp3" type="audio/mpeg">
+    <audio id="bgm-menu" loop preload="auto">
+        <source src="assets/bgm-menu.mp3" type="audio/mpeg">
     </audio>
-    <audio id="bgm-game" loop>
-        <source src="https://github.com/ilindekguru/Lagulagu/raw/refs/heads/main/Plants%20vs%20Zombies%20Music%20-%20Daytime%20in%20Front%20Yard%20(Horde).mp3" type="audio/mpeg">
-    </audio>
-    <audio id="sfx-win-source" preload="auto">
-        <source src="https://github.com/ilindekguru/Lagulagu/raw/refs/heads/main/brass-fanfare-with-timpani-and-winchimes-reverberated-146260.mp3" type="audio/mpeg">
+    <audio id="bgm-game" loop preload="auto">
+        <source src="assets/bgm-game.mp3" type="audio/mpeg">
     </audio>
 
     <canvas id="confetti-canvas"></canvas>
 
-    <!-- SPLASH SCREEN -->
-    <div id="splash-screen" onclick="enterGame()">
-        <div class="splash-content">
-            <div class="created-by">Created by</div>
-            <div class="creator-name">ILINING USWATUUN KHASANAH</div>
-            <div class="creator-title">Duta Teknologi Jawa Tengah 2024</div>
-            <div class="tap-to-start">TAP TO START ▶</div>
-        </div>
-    </div>
-
     <!-- MENU UTAMA -->
     <div id="menu-screen">
-        <div class="title">MATH BATTLE<br><span class="subtitle">Zombie City</span></div>
+        <div class="title">Nembak Zombi</div>
         
         <!-- STEP 1: MODE SELECT -->
         <div id="step-player" class="menu-step">
-            <img src="https://i.imgur.com/evTtOoQ.png" alt="Pilih Mode" class="mode-header-img">
+            <img src="assets/header-mode.png" alt="Pilih Mode" class="mode-header-img">
             <div class="mode-selection-container">
-                <img src="https://i.imgur.com/D3U5exB.png" class="mode-btn-img" onclick="initAudio(); goToDifficulty(1)" alt="1 Player Mode">
-                <img src="https://i.imgur.com/WdG957V.png" class="mode-btn-img" onclick="initAudio(); goToDifficulty(2)" alt="2 Player Mode">
+                <img src="assets/btn-1p.png" class="mode-btn-img" onclick="initAudio(); goToDifficulty(1)" alt="1 Player Mode">
+                <img src="assets/btn-2p.png" class="mode-btn-img" onclick="initAudio(); goToDifficulty(2)" alt="2 Player Mode">
             </div>
         </div>
 
@@ -310,9 +260,9 @@
         <div id="step-difficulty" class="menu-step hidden">
             <h2 style="color:#eee; margin-bottom:20px; font-size:1.5rem; text-shadow:2px 2px 2px #000;">Tingkat Kesulitan</h2>
             <div class="diff-selection-container">
-                <img src="https://i.imgur.com/ambiptY.png" class="diff-btn-img" onclick="handleDifficultySelect('easy')" alt="Mudah">
-                <img src="https://i.imgur.com/2TiATVL.png" class="diff-btn-img" onclick="handleDifficultySelect('medium')" alt="Sedang">
-                <img src="https://i.imgur.com/4uX7veW.png" class="diff-btn-img" onclick="handleDifficultySelect('hard')" alt="Sulit">
+                <img src="assets/btn-easy.png" class="diff-btn-img" onclick="handleDifficultySelect('easy')" alt="Mudah">
+                <img src="assets/btn-medium.png" class="diff-btn-img" onclick="handleDifficultySelect('medium')" alt="Sedang">
+                <img src="assets/btn-hard.png" class="diff-btn-img" onclick="handleDifficultySelect('hard')" alt="Sulit">
             </div>
             <button class="menu-btn" style="width:auto; padding:10px 20px; margin-top:30px;" onclick="backToPlayer()">Kembali</button>
         </div>
@@ -396,39 +346,26 @@
         const bgmMenu = document.getElementById('bgm-menu');
         const bgmGame = document.getElementById('bgm-game');
         
-        const SHOOT_URL = "https://github.com/ilindekguru/Lagulagu/raw/refs/heads/main/alien-ray-gun-90345.mp3";
-        const WIN_URL = "https://github.com/ilindekguru/Lagulagu/raw/refs/heads/main/brass-fanfare-with-timpani-and-winchimes-reverberated-146260.mp3";
+        const SHOOT_URL = "assets/sfx-shoot.mp3";
+        const WIN_URL = "assets/sfx-win.mp3";
+        const sfxPool = []; const SFX_POOL_SIZE = 5; let sfxPoolIdx = 0;
+        for (let i = 0; i < SFX_POOL_SIZE; i++) { const a = new Audio(SHOOT_URL); a.volume = 0.6; a.preload = 'auto'; sfxPool.push(a); }
 
         let audioStarted = false;
 
         function initAudio() {
             if (!audioStarted) {
                 bgmMenu.volume = 0.5; bgmGame.volume = 0.3;
-                bgmMenu.play().catch(e => console.log("Audio autoplay prevented"));
-                new Audio(SHOOT_URL); 
-                new Audio(WIN_URL);
                 audioStarted = true;
             }
-        }
-
-        function enterGame() {
-            initAudio();
-            const splash = document.getElementById('splash-screen');
-            const menu = document.getElementById('menu-screen');
-            
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.style.display = 'none';
-                menu.style.display = 'flex';
-                bgmMenu.play().catch(()=>{}); // Force play menu music
-            }, 800);
+            bgmMenu.play().catch(() => {}); // dipanggil dari klik user (kebijakan autoplay)
         }
 
         function switchMusic(toGame) {
             if (toGame) { bgmMenu.pause(); bgmMenu.currentTime = 0; bgmGame.play().catch(()=>{}); } 
             else { bgmGame.pause(); bgmGame.currentTime = 0; bgmMenu.play().catch(()=>{}); }
         }
-        function playShootSfx() { const sfx = new Audio(SHOOT_URL); sfx.volume = 0.6; sfx.play().catch(e => {}); }
+        function playShootSfx() { const sfx = sfxPool[sfxPoolIdx]; sfxPoolIdx = (sfxPoolIdx + 1) % SFX_POOL_SIZE; sfx.currentTime = 0; sfx.play().catch(e => {}); }
         function playWinSfx() { const sfx = new Audio(WIN_URL); sfx.volume = 1.0; sfx.play().catch(e => {}); }
         function speakVictory() {
             if ('speechSynthesis' in window) {
@@ -459,12 +396,12 @@
         }
 
         // --- ASSETS ---
-        const ZOMBIE_URLS = ["https://i.imgur.com/Mhhc189.png", "https://i.imgur.com/seG3o8U.png", "https://i.imgur.com/9a48aOv.png", "https://i.imgur.com/P5EOQjy.png", "https://i.imgur.com/lW5LslS.png", "https://i.imgur.com/ezdXfwx.png", "https://i.imgur.com/cxIJKKs.png"];
+        const ZOMBIE_URLS = ["assets/zombie1.png", "assets/zombie2.png", "assets/zombie3.png", "assets/zombie4.png", "assets/zombie5.png", "assets/zombie6.png", "assets/zombie7.png"];
         const zombieImages = []; ZOMBIE_URLS.forEach(url => { const img = new Image(); img.src = url; zombieImages.push(img); });
 
         // --- GLOBALS ---
         let gameMode = 1; let difficulty = 'medium'; let topic = 'add'; let isRunning = false;
-        let p1Game, p2Game; let animId; let targetScore = 250;
+        let p1Game, p2Game; let animId; let targetScore = 250; let pendingStart = null;
 
         // --- NAVIGATION ---
         function goToDifficulty(mode) { gameMode = mode; document.getElementById('step-player').classList.add('hidden'); document.getElementById('step-difficulty').classList.remove('hidden'); }
@@ -489,7 +426,8 @@
             else { p1.className = 'player-panel full-width'; p2.style.display = 'none'; }
 
             confettis = []; 
-            setTimeout(() => {
+            if (pendingStart) { clearTimeout(pendingStart); }
+            pendingStart = setTimeout(() => {
                 p1Game = new GameInstance('canvas1', 1); p1Game.resize();
                 if (gameMode === 2) { p2Game = new GameInstance('canvas2', 2); p2Game.resize(); }
                 setupMultiTouch();
@@ -600,7 +538,7 @@
                 for(let i=0; i<this.zombies.length; i++) {
                     if(this.zombies[i].answer === ans) {
                         playShootSfx();
-                        this.bullets.push(new Bullet(this.playerPos.x, this.playerPos.y - 30, this.zombies[i].x, this.zombies[i].y));
+            this.bullets.push(new Bullet(this.playerPos.x, this.playerPos.y - 30, this.zombies[i].x, this.zombies[i].y));
                         this.createExplosion(this.zombies[i].x, this.zombies[i].y, '#2ecc71');
                         this.zombies.splice(i, 1); hit = true; this.score += 10;
                         if(this.score % 50 === 0) {
@@ -651,11 +589,11 @@
                 else if (op === 'sub') { a=r(range*1.5)+5; b=r(a); this.text=`${a}-${b}`; this.answer=a-b; }
                 else if (op === 'mul') { let m=difficulty==='easy'?5:9; a=r(m)+2; b=r(m)+2; this.text=`${a}×${b}`; this.answer=a*b; }
                 else if (op === 'div') { b=r(9)+2; let res=r(10)+1; a=b*res; this.text=`${a}÷${b}`; this.answer=res; }
-                else if (op === 'int') { let l=15; a=r(l*2)-l; b=r(l*2)-l; this.text=Math.random()>0.5?`${a}+${b<0?`(${b})`:b}`:`${a}-${b<0?`(${b})`:b}`; this.answer=eval(this.text.replace('×','*').replace('÷','/').replace(')(',')-(')); }
+                else if (op === 'int') { let l=15; a=r(l*2)-l; b=r(l*2)-l; if (Math.random() > 0.5) { this.text=`${a}+${b<0?`(${b})`:b}`; this.answer=a+b; } else { this.text=`${a}-${b<0?`(${b})`:b}`; this.answer=a-b; } }
             }
             update() { this.y += this.speed; this.x += Math.sin((this.y + this.wiggle) / 40) * 0.5; if(this.x<30)this.x=30; }
             draw(ctx) {
-                if(this.image && this.image.complete) ctx.drawImage(this.image, this.x-this.r, this.y-this.r, this.r*2, this.r*2);
+                if(this.image && this.image.complete && this.image.naturalWidth > 0) ctx.drawImage(this.image, this.x-this.r, this.y-this.r, this.r*2, this.r*2);
                 else { ctx.fillStyle='#27ae60'; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); }
                 ctx.fillStyle="rgba(255,255,255,0.95)"; ctx.shadowColor="rgba(0,0,0,0.5)"; ctx.shadowBlur=4;
                 ctx.beginPath(); ctx.roundRect(this.x-55,this.y-(this.r*2.2),110,32,8); ctx.fill();
