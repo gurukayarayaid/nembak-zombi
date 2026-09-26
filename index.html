@@ -207,7 +207,7 @@
         }
         .victory-title {
             font-size: clamp(3rem, 6vw, 5rem); color: var(--win-color);
-            text-transform: uppercase; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 4px 4px 0 #000;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 4px 4px 0 #000;
             margin: 0; animation: bounce 1s infinite alternate;
         }
         .defeat-title {
@@ -307,7 +307,7 @@
                 <canvas id="canvas1"></canvas>
                 <div class="input-display" id="p1-display">?</div>
                 <div class="modal-overlay" id="p1-modal">
-                    <h2 id="p1-modal-title" class="victory-title">VICTORY!</h2>
+                    <h2 id="p1-modal-title" class="victory-title">Menang</h2>
                     <p style="font-size: 1.2rem;">Skor Akhir: <span id="p1-final">0</span></p>
                     <button class="restart-btn-in-game" onpointerdown="backToMenu()">MENU UTAMA</button>
                 </div>
@@ -331,7 +331,7 @@
                 <canvas id="canvas2"></canvas>
                 <div class="input-display" id="p2-display">?</div>
                 <div class="modal-overlay" id="p2-modal">
-                    <h2 id="p2-modal-title" class="victory-title">VICTORY!</h2>
+                    <h2 id="p2-modal-title" class="victory-title">Menang</h2>
                     <p style="font-size: 1.2rem;">Skor Akhir: <span id="p2-final">0</span></p>
                     <button class="restart-btn-in-game" onpointerdown="backToMenu()">MENU UTAMA</button>
                 </div>
@@ -573,10 +573,10 @@
             gameOver(isVictory) {
                 this.isOver = true; this.elFinal.innerText = this.score; this.elModal.style.display = 'flex';
                 if (isVictory) {
-                    this.elModalTitle.innerText = "VICTORY!"; this.elModalTitle.className = "victory-title";
+                    this.elModalTitle.innerText = "Menang"; this.elModalTitle.className = "victory-title";
                     if (!confettis.length) { fireConfetti(); updateConfetti(); }
                 } else {
-                    this.elModalTitle.innerText = "DEFEAT"; this.elModalTitle.className = "defeat-title";
+                    this.elModalTitle.innerText = "Kalah"; this.elModalTitle.className = "defeat-title";
                 }
                 handleGlobalEnd(this.pid, isVictory);
             }

@@ -1,5 +1,5 @@
 /* Service Worker Nembak Zombi — cache-first agar game jalan offline penuh. */
-const CACHE = 'nembak-zombi-v1';
+const CACHE = 'nembak-zombi-v2';
 
 const ASSETS = [
   './',
@@ -60,6 +60,19 @@ self.addEventListener('fetch', (e) => {
 
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
+
+    // Halaman (navigasi): network-first supaya update cepat sampai ke pemain;
+    // saat offline jatuh ke cache.
+    if (e.request.mode === 'navigate') {
+      try {
+        const fresh = await fetch(e.request);
+        try { cache.put('./index.html', fresh.clone()); } catch (_) {}
+        return fresh;
+      } catch (_) {
+        return (await cache.match('./index.html')) || Response.error();
+      }
+    }
+
     const hit = await cache.match('./' + url.pathname.split('/').pop(), { ignoreSearch: true })
       || await cache.match(e.request, { ignoreSearch: true });
     if (hit) return hit;
