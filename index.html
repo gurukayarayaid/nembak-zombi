@@ -348,6 +348,7 @@
         
         const SHOOT_URL = "assets/sfx-shoot.mp3";
         const WIN_URL = "assets/sfx-win.mp3";
+        const WRONG_URL = "assets/sfx-wrong.mp3";
         const sfxPool = []; const SFX_POOL_SIZE = 5; let sfxPoolIdx = 0;
         for (let i = 0; i < SFX_POOL_SIZE; i++) { const a = new Audio(SHOOT_URL); a.volume = 0.6; a.preload = 'auto'; sfxPool.push(a); }
 
@@ -366,6 +367,8 @@
             else { bgmGame.pause(); bgmGame.currentTime = 0; bgmMenu.play().catch(()=>{}); }
         }
         function playShootSfx() { const sfx = sfxPool[sfxPoolIdx]; sfxPoolIdx = (sfxPoolIdx + 1) % SFX_POOL_SIZE; sfx.currentTime = 0; sfx.play().catch(e => {}); }
+        const wrongSfx = new Audio(WRONG_URL); wrongSfx.volume = 0.7; wrongSfx.preload = 'auto';
+        function playWrongSfx() { wrongSfx.currentTime = 0; wrongSfx.play().catch(e => {}); }
         function playWinSfx() { const sfx = new Audio(WIN_URL); sfx.volume = 1.0; sfx.play().catch(e => {}); }
         function speakVictory() {
             if ('speechSynthesis' in window) {
@@ -553,6 +556,7 @@
                     }
                 }
                 if(!hit) {
+                    playWrongSfx();
                     this.elDisplay.style.borderColor = "#e74c3c"; this.elDisplay.style.color = "#e74c3c";
                     setTimeout(() => this.updateDisplay(), 200);
                 }
