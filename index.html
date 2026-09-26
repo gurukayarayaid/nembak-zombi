@@ -378,8 +378,8 @@
         function playWinSfx() { const sfx = new Audio(WIN_URL); sfx.volume = 1.0; sfx.play().catch(e => {}); }
         function speakVictory() {
             if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance("Selamat! Kamu Menang!");
-                utterance.lang = 'id-ID'; utterance.rate = 1.0;
+                const utterance = new SpeechSynthesisUtterance("Hore! Kamu berhasil nembak semua zombie!");
+                utterance.lang = 'id-ID'; utterance.rate = 1.05; utterance.pitch = 1.2;
                 window.speechSynthesis.speak(utterance);
             }
         }
