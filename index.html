@@ -598,12 +598,30 @@
                     let z = this.zombies[i]; z.update(); z.draw(this.ctx);
                     if (z.y > this.canvas.height - 40) {
                         this.lives--; this.updateHearts(); this.createExplosion(z.x, z.y, 'red');
+                        z.dead = true;
                         this.zombies.splice(i, 1); if (this.lives <= 0) this.gameOver(false);
                     }
                 }
                 for (let i = this.bullets.length - 1; i >= 0; i--) {
-                    let b = this.bullets[i]; b.update(); b.draw(this.ctx);
-                    if(b.outOfBounds(this.canvas.width, this.canvas.height)) this.bullets.splice(i,1);
+                    let b = this.bullets[i]; b.update();
+                    let kena = b.target && !b.target.dead && b.kenaTarget();
+                    if (kena) {
+                        // PELURU MENGHENAI ZOMBIE: zombie mati di titik ini
+                        this.createExplosion(b.target.x, b.target.y, '#2ecc71');
+                        const idx = this.zombies.indexOf(b.target);
+                        if (idx !== -1) this.zombies.splice(idx, 1);
+                        b.target.dead = true;
+                        this.score += 10;
+                        if(this.score % 50 === 0) {
+                            this.level++;
+                            let minRate = difficulty === 'hard' ? 800 : (difficulty === 'medium' ? 1200 : 2000);
+                            this.spawnRate = Math.max(minRate, this.spawnRate - 200);
+                        }
+                        this.elScore.innerText = this.score;
+                        if (gameMode === 1 && this.score >= targetScore) this.gameOver(true);
+                    }
+                    if (kena || (b.target && b.target.dead) || b.outOfBounds(this.canvas.width, this.canvas.height)) this.bullets.splice(i, 1);
+                    else b.draw(this.ctx);
                 }
                 for (let i = this.particles.length - 1; i >= 0; i--) {
                     let p = this.particles[i]; p.update(); p.draw(this.ctx);
@@ -632,18 +650,11 @@
                 const ans = parseInt(this.input); let hit = false;
                 this.zombies.sort((a,b) => b.y - a.y);
                 for(let i=0; i<this.zombies.length; i++) {
-                    if(this.zombies[i].answer === ans) {
+                    if(this.zombies[i].answer === ans && !this.zombies[i].doomed) {
                         playShootSfx();
-            this.bullets.push(new Bullet(this.playerPos.x, this.playerPos.y - 30, this.zombies[i].x, this.zombies[i].y));
-                        this.createExplosion(this.zombies[i].x, this.zombies[i].y, '#2ecc71');
-                        this.zombies.splice(i, 1); hit = true; this.score += 10;
-                        if(this.score % 50 === 0) {
-                            this.level++;
-                            let minRate = difficulty === 'hard' ? 800 : (difficulty === 'medium' ? 1200 : 2000);
-                            this.spawnRate = Math.max(minRate, this.spawnRate - 200);
-                        }
-                        this.elScore.innerText = this.score;
-                        if (gameMode === 1 && this.score >= targetScore) this.gameOver(true);
+                        this.zombies[i].doomed = true;   // ditandai: peluru sedang menuju ke dia
+                        this.bullets.push(new Bullet(this.playerPos.x, this.playerPos.y - 30, this.zombies[i]));
+                        hit = true;
                         this.elDisplay.style.borderColor = "#2ecc71"; this.elDisplay.style.color = "#2ecc71";
                         setTimeout(() => this.updateDisplay(), 200); break;
                     }
@@ -711,8 +722,22 @@
         }
         function r(n) { return Math.floor(Math.random()*n); }
         class Bullet {
-            constructor(x, y, tx, ty) { this.x=x; this.y=y; const dx=tx-x; const dy=ty-y; const dist=Math.sqrt(dx*dx+dy*dy); this.vx=(dx/dist)*25; this.vy=(dy/dist)*25; }
-            update() { this.x+=this.vx; this.y+=this.vy; }
+            constructor(x, y, target) {
+                this.x = x; this.y = y; this.target = target; this.speed = 25; this.arah();
+            }
+            arah() {
+                const dx = this.target.x - this.x, dy = this.target.y - this.y;
+                const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                this.vx = (dx / dist) * this.speed; this.vy = (dy / dist) * this.speed;
+            }
+            update() {
+                if (this.target && !this.target.dead) this.arah();   // mengejar zombie yang tetap berjalan
+                this.x += this.vx; this.y += this.vy;
+            }
+            kenaTarget() {
+                const dx = this.x - this.target.x, dy = this.y - this.target.y;
+                return Math.sqrt(dx*dx + dy*dy) < this.target.r + 6;   // peluru menyentuh badan zombie
+            }
             draw(ctx) { ctx.fillStyle='#f1c40f'; ctx.beginPath(); ctx.arc(this.x,this.y,6,0,Math.PI*2); ctx.fill(); }
             outOfBounds(w,h) { return this.y<-50||this.x<-50||this.x>w+50; }
         }
