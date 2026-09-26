@@ -89,6 +89,11 @@
             from { opacity: 0; transform: translateY(26px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes keluar {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-18px); }
+        }
+        .menu-step.keluar { animation: keluar 0.25s ease-in both !important; pointer-events: none; }
         .title { animation: masuk 0.7s ease-out both; }
         .menu-step > * { animation: masuk 0.55s ease-out both; }
         .menu-step > *:nth-child(1) { animation-delay: 0.08s; }
@@ -100,6 +105,8 @@
         .menu-step > .mode-header-img { animation: masuk 0.55s ease-out both, float 3s ease-in-out 0.7s infinite; }
         @media (prefers-reduced-motion: reduce) {
             .title, .rekor-menu, .menu-step > * { animation: none !important; }
+            .menu-step.keluar { animation: none !important; transition: none !important; }
+            .menu-step { transition: none !important; }
         }
         .hidden { display: none !important; }
 
@@ -454,13 +461,25 @@
         let gameMode = 1; let difficulty = 'medium'; let topic = 'add'; let isRunning = false;
         let p1Game, p2Game; let animId; let targetScore = 250; let pendingStart = null;
 
+        // --- TRANSISI ANTAR LANGKAH MENU ---
+        function gantiLangkah(dariId, keId) {
+            const dari = document.getElementById(dariId);
+            const ke = document.getElementById(keId);
+            if (!dari || !ke || dari === ke) return;
+            dari.classList.add('keluar');
+            setTimeout(() => {
+                dari.classList.add('hidden'); dari.classList.remove('keluar');
+                ke.classList.remove('hidden');   // animasi masuk berurutan diputar otomatis
+            }, 200);
+        }
+
         // --- NAVIGATION ---
-        function goToDifficulty(mode) { gameMode = mode; document.getElementById('step-player').classList.add('hidden'); document.getElementById('step-difficulty').classList.remove('hidden'); }
-        function backToPlayer() { document.getElementById('step-difficulty').classList.add('hidden'); document.getElementById('step-player').classList.remove('hidden'); }
-        function handleDifficultySelect(diff) { difficulty = diff; document.getElementById('step-difficulty').classList.add('hidden'); if(gameMode===1) document.getElementById('step-target').classList.remove('hidden'); else document.getElementById('step-topic').classList.remove('hidden'); }
-        function backToDifficulty() { document.getElementById('step-target').classList.add('hidden'); document.getElementById('step-difficulty').classList.remove('hidden'); }
-        function goToTopicFromTarget(score) { targetScore = score; document.getElementById('step-target').classList.add('hidden'); document.getElementById('step-topic').classList.remove('hidden'); }
-        function backToTargetOrDiff() { document.getElementById('step-topic').classList.add('hidden'); if(gameMode===1)document.getElementById('step-target').classList.remove('hidden'); else document.getElementById('step-difficulty').classList.remove('hidden'); }
+        function goToDifficulty(mode) { gameMode = mode; gantiLangkah('step-player', 'step-difficulty'); }
+        function backToPlayer() { gantiLangkah('step-difficulty', 'step-player'); }
+        function handleDifficultySelect(diff) { difficulty = diff; if(gameMode===1) gantiLangkah('step-difficulty', 'step-target'); else gantiLangkah('step-difficulty', 'step-topic'); }
+        function backToDifficulty() { gantiLangkah('step-target', 'step-difficulty'); }
+        function goToTopicFromTarget(score) { targetScore = score; gantiLangkah('step-target', 'step-topic'); }
+        function backToTargetOrDiff() { if(gameMode===1) gantiLangkah('step-topic', 'step-target'); else gantiLangkah('step-topic', 'step-difficulty'); }
 
         function startGame(selectedTopic) {
             topic = selectedTopic;
@@ -490,8 +509,10 @@
             isRunning = false; cancelAnimationFrame(animId);
             document.getElementById('p1-modal').style.display = 'none'; document.getElementById('p2-modal').style.display = 'none';
             document.getElementById('game-container').style.display = 'none'; document.getElementById('menu-screen').style.display = 'flex';
-            document.getElementById('step-topic').classList.add('hidden'); document.getElementById('step-target').classList.add('hidden');
-            document.getElementById('step-difficulty').classList.add('hidden'); document.getElementById('step-player').classList.remove('hidden');
+            document.getElementById('step-topic').classList.add('hidden'); document.getElementById('step-topic').classList.remove('keluar');
+            document.getElementById('step-target').classList.add('hidden'); document.getElementById('step-target').classList.remove('keluar');
+            document.getElementById('step-difficulty').classList.add('hidden'); document.getElementById('step-difficulty').classList.remove('keluar');
+            document.getElementById('step-player').classList.remove('hidden'); document.getElementById('step-player').classList.remove('keluar');
             switchMusic(false); confettis = []; confCtx.clearRect(0,0,confCanvas.width, confCanvas.height);
             tampilRekorMenu();
         }
