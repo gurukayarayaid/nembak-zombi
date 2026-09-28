@@ -772,19 +772,34 @@
         class Bullet {
             constructor(x, y, target) {
                 this.x = x; this.y = y; this.target = target; this.speed = 1500;   // px per detik
+                this.ekor = [];   // jejak ekor peluru agar lintasan terbang terlihat
                 this.arah();
             }
             arah() {
                 const dx = this.target.x - this.x, dy = this.target.y - this.y;
                 const dist = Math.sqrt(dx*dx + dy*dy) || 1;
                 this.vx = (dx / dist) * this.speed; this.vy = (dy / dist) * this.speed;
-            }            update(dt) { if (this.target && !this.target.dead) this.arah();   // mengejar zombie yang tetap berjalan
-                const s = (dt || 16.7) / 1000; this.x += this.vx * s; this.y += this.vy * s; }
+            }
+            update(dt) { if (this.target && !this.target.dead) this.arah();   // mengejar zombie yang tetap berjalan
+                const s = (dt || 16.7) / 1000; this.x += this.vx * s; this.y += this.vy * s;
+                this.ekor.push({x: this.x, y: this.y});   // catat posisi untuk ekor
+                if (this.ekor.length > 8) this.ekor.shift();
+            }
             kenaTarget() {
                 const dx = this.x - this.target.x, dy = this.y - this.target.y;
                 return Math.sqrt(dx*dx + dy*dy) < this.target.r + 6;   // peluru menyentuh badan zombie
             }
-            draw(ctx) { ctx.fillStyle='#f1c40f'; ctx.beginPath(); ctx.arc(this.x,this.y,6,0,Math.PI*2); ctx.fill(); }
+            draw(ctx) {
+                // jejak ekor: titik-titik posisi lama, makin jauh dari peluru makin tipis dan kecil
+                for (let i = 0; i < this.ekor.length; i++) {
+                    const t = (i + 1) / this.ekor.length;   // 0..1, makin dekat peluru makin pekat
+                    ctx.globalAlpha = t * 0.4;
+                    ctx.fillStyle = '#f5d76e';
+                    ctx.beginPath(); ctx.arc(this.ekor[i].x, this.ekor[i].y, 1.5 + 3.5 * t, 0, Math.PI*2); ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                ctx.fillStyle='#f1c40f'; ctx.beginPath(); ctx.arc(this.x,this.y,6,0,Math.PI*2); ctx.fill();
+            }
             outOfBounds(w,h) { return this.y<-50||this.x<-50||this.x>w+50; }
         }
         class Particle {
