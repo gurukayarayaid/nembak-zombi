@@ -631,6 +631,7 @@
                 for (let i = this.zombies.length - 1; i >= 0; i--) {
                     let z = this.zombies[i]; z.update(dt); z.draw(this.ctx);
                     if (z.y > this.canvas.height - 40) {
+                        if (this.lives <= 0 || this.isOver) return;   // sudah kalah: hentikan update agar nyawa tidak minus
                         this.lives--; this.updateHearts(); this.createExplosion(z.x, z.y, 'red');
                         z.dead = true;
                         this.zombies.splice(i, 1); if (this.lives <= 0) this.gameOver(false);
@@ -712,7 +713,7 @@
                 for(let i=0; i<26; i++) this.particles.push(new Particle(x,y, i%4===0 ? '#f1c40f' : '#2ecc71', true));
                 for(let i=0; i<10; i++) this.particles.push(new Particle(x,y,'#ffffff', true));
             }
-            updateHearts() { this.elHearts.innerText = "❤️".repeat(this.lives); }
+            updateHearts() { this.elHearts.innerText = "❤️".repeat(Math.max(0, this.lives)); }
             updateRekorLine() {
                 if (gameMode !== 1 || !this.elRekor) return;
                 const kunci = 'nembak-zombi-rekor';
