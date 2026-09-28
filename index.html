@@ -153,6 +153,7 @@
             display: flex; gap: 10px; align-items: center; justify-content: center;
             flex-wrap: wrap; margin-top: 4vh;
         }
+        .speed-menu { margin-top: 1.2vh; margin-bottom: 0; }
         .speed-label {
             color: #eee; font-weight: bold; text-shadow: 2px 2px 0 #000;
             font-size: 1rem; letter-spacing: 1px;
@@ -327,6 +328,12 @@
         <button id="btn-fullscreen" title="Layar Penuh" onclick="toggleFullscreen()">⛶</button>
         <div class="title">Nembak Zombi</div>
         <div class="rekor-menu" id="rekor-menu"></div>
+        <div class="speed-group speed-menu">
+            <span class="speed-label">Kecepatan Zombie:</span>
+            <button class="speed-btn" data-k="0.5">Lambat</button>
+            <button class="speed-btn" data-k="0.75">Sedang</button>
+            <button class="speed-btn" data-k="1">Cepat</button>
+        </div>
         
         <!-- STEP 1: MODE SELECT -->
         <div id="step-player" class="menu-step">
