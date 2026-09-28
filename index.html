@@ -674,7 +674,7 @@
                 this.elRekor.innerText = ""; this.elRekor.classList.remove('new');
                 this.elModal.style.display = 'none';
 
-                this.zombies = []; this.bullets = []; this.particles = []; this.shockwaves = []; this.melayang = []; this.guncang = 0; this.combo = 0; this.lastSpawn = 0; this.isOver = false;
+                this.zombies = []; this.bullets = []; this.particles = []; this.shockwaves = []; this.melayang = []; this.guncang = 0; this.combo = 0; this.comboTerbaik = 0; this.lastSpawn = 0; this.isOver = false;
                 this.spawnRate = difficulty === 'easy' ? 4000 : (difficulty === 'medium' ? 3000 : 2000);
                 this.playerPos = { x: 0, y: 0 };
             }
@@ -709,6 +709,7 @@
                     if (kena) {
                         // PELURU MENGHENAI ZOMBIE: zombie mati di titik ini
                         this.combo++;   // tembakan benar beruntun
+                        if (this.combo > this.comboTerbaik) this.comboTerbaik = this.combo;   // catat beruntun terbaik sesi ini
                         const bonus = Math.min(this.combo - 1, 5) * 5;   // bonus naik sampai +25
                         const poin = 10 + bonus;
                         if (b.target.doomed) this.createDramaticExplosion(b.target.x, b.target.y, this.combo);
@@ -797,13 +798,16 @@
             updateHearts() { this.elHearts.innerText = "❤️".repeat(Math.max(0, this.lives)); }
             updateRekorLine() {
                 if (gameMode !== 1 || !this.elRekor) return;
-                const kunci = 'nembak-zombi-rekor';
-                let rekor = 0;
-                try { rekor = parseInt(localStorage.getItem(kunci)) || 0; } catch (e) {}
-                let rekorBaru = false;
+                const kunci = 'nembak-zombi-rekor', kunciCombo = 'nembak-zombi-rekor-combo';
+                let rekor = 0, rekorCombo = 0;
+                try { rekor = parseInt(localStorage.getItem(kunci)) || 0; rekorCombo = parseInt(localStorage.getItem(kunciCombo)) || 0; } catch (e) {}
+                let rekorBaru = false, comboBaru = false;
                 if (this.score > rekor) { rekor = this.score; rekorBaru = true; try { localStorage.setItem(kunci, String(rekor)); } catch (e) {} }
-                this.elRekor.innerText = rekorBaru ? `🏆 Rekor Baru: ${rekor} poin!` : `Rekor Tertinggi: ${rekor} poin`;
-                this.elRekor.classList.toggle('new', rekorBaru);
+                if (this.comboTerbaik > rekorCombo) { rekorCombo = this.comboTerbaik; comboBaru = true; try { localStorage.setItem(kunciCombo, String(rekorCombo)); } catch (e) {} }
+                let teks = rekorBaru ? `🏆 Rekor Baru: ${rekor} poin!` : `Rekor Tertinggi: ${rekor} poin`;
+                if (rekorCombo >= 2) teks += comboBaru ? `  |  🔥 Combo Terpanjang Baru: x${rekorCombo}!` : `  |  🔥 Combo Terpanjang: x${rekorCombo}`;
+                this.elRekor.innerText = teks;
+                this.elRekor.classList.toggle('new', rekorBaru || comboBaru);
             }
             gameOver(isVictory) {
                 this.isOver = true; this.elFinal.innerText = this.score; this.elModal.style.display = 'flex'; this.updateRekorLine();
