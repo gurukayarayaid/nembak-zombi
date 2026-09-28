@@ -627,7 +627,7 @@
                 this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
                 this.drawPlayer();
                 const now = Date.now();
-                if (now - this.lastSpawn > this.spawnRate) { this.zombies.push(new Zombie(this.canvas.width, this.level)); this.lastSpawn = now; }
+                if (now - this.lastSpawn > this.spawnRate) { this.zombies.push(new Zombie(this.canvas.width, this.level, this.zombies)); this.lastSpawn = now; }
                 for (let i = this.zombies.length - 1; i >= 0; i--) {
                     let z = this.zombies[i]; z.update(dt); z.draw(this.ctx);
                     if (z.y > this.canvas.height - 40) {
@@ -737,24 +737,30 @@
 
         // --- ENTITIES ---
         class Zombie {
-            constructor(canvasW, level) {
+            constructor(canvasW, level, zombiesAda) {
                 this.r = 30; this.x = Math.random() * (canvasW - 2*this.r) + this.r; this.y = -60;
                 this.image = zombieImages[Math.floor(Math.random() * zombieImages.length)];
                 // kecepatan dasar dalam px per detik — dikalibrasi lebih pelan dari versi lama
                 let baseSpeed = difficulty === 'easy' ? 14 : (difficulty === 'hard' ? 45 : 26);
                 this.speed = (baseSpeed + (level * 3)) * kecepatanZombie;   // px/detik × pilihan pemain
                 this.wiggle = Math.random() * 100;
-                this.generateProblem(level);
+                this.generateProblem(level, zombiesAda);
             }
-            generateProblem(level) {
+            generateProblem(level, zombiesAda) {
                 let diffMult = difficulty === 'easy' ? 0.5 : (difficulty === 'hard' ? 2.0 : 1);
                 let a, b, op = topic === 'mix' ? ['add','sub','mul','div'][Math.floor(Math.random()*4)] : topic;
                 let range = Math.floor((5 * level * diffMult) + (difficulty === 'hard' ? 20 : 5));
-                if (op === 'add') { a=r(range)+2; b=r(range)+2; this.text=`${a}+${b}`; this.answer=a+b; } 
-                else if (op === 'sub') { a=r(range*1.5)+5; b=r(a); this.text=`${a}-${b}`; this.answer=a-b; }
-                else if (op === 'mul') { let m=difficulty==='easy'?5:9; a=r(m)+2; b=r(m)+2; this.text=`${a}×${b}`; this.answer=a*b; }
-                else if (op === 'div') { b=r(9)+2; let res=r(10)+1; a=b*res; this.text=`${a}÷${b}`; this.answer=res; }
-                else if (op === 'int') { let l=15; a=r(l*2)-l; b=r(l*2)-l; if (Math.random() > 0.5) { this.text=`${a}+${b<0?`(${b})`:b}`; this.answer=a+b; } else { this.text=`${a}-${b<0?`(${b})`:b}`; this.answer=a-b; } }
+                const buatSoal = () => {
+                    if (op === 'add') { a=r(range)+2; b=r(range)+2; this.text=`${a}+${b}`; this.answer=a+b; } 
+                    else if (op === 'sub') { a=r(range*1.5)+5; b=r(a); this.text=`${a}-${b}`; this.answer=a-b; }
+                    else if (op === 'mul') { let m=difficulty==='easy'?5:9; a=r(m)+2; b=r(m)+2; this.text=`${a}×${b}`; this.answer=a*b; }
+                    else if (op === 'div') { b=r(9)+2; let res=r(10)+1; a=b*res; this.text=`${a}÷${b}`; this.answer=res; }
+                    else if (op === 'int') { let l=15; a=r(l*2)-l; b=r(l*2)-l; if (Math.random() > 0.5) { this.text=`${a}+${b<0?`(${b})`:b}`; this.answer=a+b; } else { this.text=`${a}-${b<0?`(${b})`:b}`; this.answer=a-b; } }
+                };
+                buatSoal();
+                // jawaban harus unik: tidak boleh sama dengan zombie lain yang masih tampil, agar murid tidak bingung
+                let coba = 0;
+                while (zombiesAda && zombiesAda.some(z => !z.dead && z.answer === this.answer) && coba < 20) { buatSoal(); coba++; }
             }
             update(dt) { const s = (dt || 16.7) / 1000; this.y += this.speed * s; this.x += Math.sin((this.y + this.wiggle) / 40) * 0.5; if(this.x<30)this.x=30; }
             draw(ctx) {
