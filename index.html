@@ -738,7 +738,21 @@
         // --- ENTITIES ---
         class Zombie {
             constructor(canvasW, level, zombiesAda) {
-                this.r = 30; this.x = Math.random() * (canvasW - 2*this.r) + this.r; this.y = -60;
+                this.r = 30; this.y = -60;
+                // pilih posisi X agar papan soal tidak menutupi papan zombie lain yang masih tampil sebaris
+                const jarakPapan = 120;   // papan soal ~110px + sedikit jarak aman
+                let xTerbaik = null, jarakTerbaik = -1;
+                for (let coba = 0; coba < 25; coba++) {
+                    const cx = Math.random() * (canvasW - 2*this.r) + this.r;
+                    let jarakMin = Infinity;
+                    if (zombiesAda) for (const z of zombiesAda) {
+                        if (z.dead || Math.abs(z.y - this.y) > 100) continue;   // hanya tetangga yang sebaris vertikal
+                        jarakMin = Math.min(jarakMin, Math.abs(z.x - cx));
+                    }
+                    if (jarakMin === Infinity || jarakMin >= jarakPapan) { xTerbaik = cx; break; }   // lega: langsung pakai
+                    if (jarakMin > jarakTerbaik) { jarakTerbaik = jarakMin; xTerbaik = cx; }   // sempit: catat yang paling jauh
+                }
+                this.x = Math.max(this.r, Math.min(canvasW - this.r, xTerbaik));
                 this.image = zombieImages[Math.floor(Math.random() * zombieImages.length)];
                 // kecepatan dasar dalam px per detik — dikalibrasi lebih pelan dari versi lama
                 let baseSpeed = difficulty === 'easy' ? 14 : (difficulty === 'hard' ? 45 : 26);
