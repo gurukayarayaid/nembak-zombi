@@ -614,7 +614,7 @@
                 this.elRekor.innerText = ""; this.elRekor.classList.remove('new');
                 this.elModal.style.display = 'none';
 
-                this.zombies = []; this.bullets = []; this.particles = []; this.shockwaves = []; this.guncang = 0; this.lastSpawn = 0; this.isOver = false;
+                this.zombies = []; this.bullets = []; this.particles = []; this.shockwaves = []; this.melayang = []; this.guncang = 0; this.combo = 0; this.lastSpawn = 0; this.isOver = false;
                 this.spawnRate = difficulty === 'easy' ? 4000 : (difficulty === 'medium' ? 3000 : 2000);
                 this.playerPos = { x: 0, y: 0 };
             }
@@ -637,6 +637,7 @@
                     let z = this.zombies[i]; z.update(dt); z.draw(this.ctx);
                     if (z.y > this.canvas.height - 40) {
                         if (this.lives <= 0 || this.isOver) return;   // sudah kalah: hentikan update agar nyawa tidak minus
+                        this.combo = 0;   // zombie lolos: combo putus
                         this.lives--; this.updateHearts(); this.createExplosion(z.x, z.y, 'red');
                         z.dead = true;
                         this.zombies.splice(i, 1); if (this.lives <= 0) this.gameOver(false);
@@ -647,13 +648,21 @@
                     let kena = b.target && !b.target.dead && b.kenaTarget();
                     if (kena) {
                         // PELURU MENGHENAI ZOMBIE: zombie mati di titik ini
-                        if (b.target.doomed) this.createDramaticExplosion(b.target.x, b.target.y);
+                        this.combo++;   // tembakan benar beruntun
+                        const bonus = Math.min(this.combo - 1, 5) * 5;   // bonus naik sampai +25
+                        const poin = 10 + bonus;
+                        if (b.target.doomed) this.createDramaticExplosion(b.target.x, b.target.y, this.combo);
                         else this.createExplosion(b.target.x, b.target.y, '#2ecc71');
+                        this.melayang.push(this.combo >= 2
+                            ? new TeksMelayang(b.target.x, b.target.y - 10, `COMBO x${this.combo} +${poin}`, '#e67e22')
+                            : new TeksMelayang(b.target.x, b.target.y - 10, `+${poin}`, '#ffffff'));
                         const idx = this.zombies.indexOf(b.target);
                         if (idx !== -1) this.zombies.splice(idx, 1);
                         b.target.dead = true;
-                        this.score += 10;
-                        if(this.score % 50 === 0) {
+                        const skorSebelum = this.score;
+                        this.score += poin;
+                        // naik level tiap melewati kelipatan 50 poin (aman walau skor melompat karena bonus combo)
+                        if (Math.floor(this.score / 50) > Math.floor(skorSebelum / 50)) {
                             this.level++;
                             let minRate = difficulty === 'hard' ? 800 : (difficulty === 'medium' ? 1200 : 2000);
                             this.spawnRate = Math.max(minRate, this.spawnRate - 200);
@@ -671,6 +680,10 @@
                 for (let i = this.shockwaves.length - 1; i >= 0; i--) {
                     let sw = this.shockwaves[i]; sw.update(dt); sw.draw(this.ctx);
                     if(sw.life <= 0) this.shockwaves.splice(i,1);
+                }
+                for (let i = this.melayang.length - 1; i >= 0; i--) {
+                    let t = this.melayang[i]; t.update(dt); t.draw(this.ctx);
+                    if(t.life <= 0) this.melayang.splice(i,1);
                 }
                 this.ctx.restore();
             }
@@ -707,16 +720,17 @@
                 }
                 if(!hit) {
                     playWrongSfx();
+                    this.combo = 0;   // jawaban salah: combo putus
                     this.elDisplay.style.borderColor = "#e74c3c"; this.elDisplay.style.color = "#e74c3c";
                     setTimeout(() => this.updateDisplay(), 200);
                 }
                 this.input = "";
             }
             createExplosion(x,y,c) { for(let i=0; i<12; i++) this.particles.push(new Particle(x,y,c)); }
-            createDramaticExplosion(x,y) {
+            createDramaticExplosion(x,y,kombo) {
                 // Ledakan dramatis untuk zombie yang ditandai doomed: gelombang kejut + semburan besar + percikan kilat + getaran layar
                 this.shockwaves.push(new Shockwave(x,y));
-                this.guncang = 9;   // getaran layar sesaat, melemah sendiri di update()
+                this.guncang = 9 + Math.min(kombo || 0, 10) * 0.7;   // combo makin panjang, getaran makin kuat (maks ~16px)
                 for(let i=0; i<26; i++) this.particles.push(new Particle(x,y, i%4===0 ? '#f1c40f' : '#2ecc71', true));
                 for(let i=0; i<10; i++) this.particles.push(new Particle(x,y,'#ffffff', true));
             }
@@ -894,6 +908,19 @@
             }
             update(dt) { const s = (dt || 16.7) / 1000; this.x+=this.vx*s; this.y+=this.vy*s; this.life-=3*s; }
             draw(ctx) { ctx.globalAlpha=Math.max(0,this.life); ctx.fillStyle=this.c; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+        }
+        class TeksMelayang {
+            // Teks poin/combo yang melayang naik lalu memudar di titik ledakan
+            constructor(x,y,teks,warna) { this.x=x; this.y=y; this.teks=teks; this.c=warna; this.life=1; }
+            update(dt) { const s=(dt||16.7)/1000; this.y -= 45*s; this.life -= 1.6*s; }
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.c; ctx.font = "bold 18px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 4;
+                ctx.fillText(this.teks, this.x, this.y);
+                ctx.restore();
+            }
         }
         class Shockwave {
             // Gelombang kejut: lingkaran mengembang memudar dari titik ledakan
