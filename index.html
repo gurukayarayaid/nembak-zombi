@@ -565,13 +565,29 @@
             tampilRekorMenu();
         }
 
+        // Perangkat mobile: kunci orientasi landscape selagi layar penuh (layout 2 pemain dirancang menyamping).
+        // Gagal senyap di desktop/iOS — di sana orientasi memang tidak bisa dikunci dan game tetap jalan normal.
+        function kunciOrientasiLandscape() {
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    const p = screen.orientation.lock('landscape');
+                    if (p && p.catch) p.catch(() => {});
+                }
+            } catch (e) { /* diabaikan: tidak semua perangkat mendukung */ }
+        }
+        function lepasKunciOrientasi() {
+            try {
+                if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+            } catch (e) { /* diabaikan */ }
+        }
         function toggleFullscreen() {
             const doc = document.documentElement;
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                 const minta = doc.requestFullscreen ? doc.requestFullscreen() : (doc.webkitRequestFullscreen ? doc.webkitRequestFullscreen() : Promise.reject());
-                Promise.resolve(minta).catch(() => {});   // ditolak browser: biarkan saja, game tetap jalan
+                Promise.resolve(minta).then(kunciOrientasiLandscape).catch(() => {});   // ditolak browser: biarkan saja, game tetap jalan
             }
             else {
+                lepasKunciOrientasi();
                 const keluar = document.exitFullscreen ? document.exitFullscreen() : (document.webkitExitFullscreen ? document.webkitExitFullscreen() : Promise.reject());
                 Promise.resolve(keluar).catch(() => {});
             }
@@ -583,6 +599,8 @@
         }
         document.addEventListener('fullscreenchange', perbaruiIkonFullscreen);
         document.addEventListener('webkitfullscreenchange', perbaruiIkonFullscreen);
+        // keluar fullscreen lewat Esc/tombol sistem: ikon kembali + kunci orientasi dilepas
+        document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) lepasKunciOrientasi(); });
 
         function tampilRekorMenu() {
             const el = document.getElementById('rekor-menu');
