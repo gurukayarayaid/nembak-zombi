@@ -254,6 +254,17 @@
             z-index: 5; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
+        /* TOMBOL LAYAR PENUH: mengambang di pojok kanan atas, di menu maupun saat main */
+        #btn-fullscreen {
+            position: fixed; top: 10px; right: 10px; z-index: 100;
+            width: 46px; height: 46px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.35);
+            background: rgba(0,0,0,0.55); color: #fff; font-size: 1.5rem; line-height: 1;
+            cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center;
+            touch-action: manipulation; user-select: none;
+        }
+        #btn-fullscreen:active { transform: translateY(2px); }
+
         /* MODALS */
         .modal-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -313,6 +324,7 @@
 
     <!-- MENU UTAMA -->
     <div id="menu-screen">
+        <button id="btn-fullscreen" title="Layar Penuh" onclick="toggleFullscreen()">⛶</button>
         <div class="title">Nembak Zombi</div>
         <div class="rekor-menu" id="rekor-menu"></div>
         
@@ -550,6 +562,25 @@
             switchMusic(false); confettis = []; confCtx.clearRect(0,0,confCanvas.width, confCanvas.height);
             tampilRekorMenu();
         }
+
+        function toggleFullscreen() {
+            const doc = document.documentElement;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                const minta = doc.requestFullscreen ? doc.requestFullscreen() : (doc.webkitRequestFullscreen ? doc.webkitRequestFullscreen() : Promise.reject());
+                Promise.resolve(minta).catch(() => {});   // ditolak browser: biarkan saja, game tetap jalan
+            }
+            else {
+                const keluar = document.exitFullscreen ? document.exitFullscreen() : (document.webkitExitFullscreen ? document.webkitExitFullscreen() : Promise.reject());
+                Promise.resolve(keluar).catch(() => {});
+            }
+        }
+        // sesuaikan tampilan ikon setelah masuk/keluar layar penuh (termasuk tombol Esc)
+        function perbaruiIkonFullscreen() {
+            const b = document.getElementById('btn-fullscreen');
+            if (b) b.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? '⤡' : '⛶';
+        }
+        document.addEventListener('fullscreenchange', perbaruiIkonFullscreen);
+        document.addEventListener('webkitfullscreenchange', perbaruiIkonFullscreen);
 
         function tampilRekorMenu() {
             const el = document.getElementById('rekor-menu');
