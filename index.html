@@ -507,6 +507,8 @@
             document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('aktif', parseFloat(b.dataset.k) === k));
         }
         setKecepatanZombie(kecepatanZombie);   // tandai tombol aktif sesuai pilihan tersimpan
+        // hubungkan tombol Lambat/Sedang/Cepat ke pengaturan (dulu kliknya mati: tak ada handler)
+        document.querySelectorAll('.speed-btn').forEach(b => b.addEventListener('click', () => setKecepatanZombie(parseFloat(b.dataset.k))));
 
         // --- TRANSISI ANTAR LANGKAH MENU ---
         function gantiLangkah(dariId, keId) {
