@@ -614,7 +614,7 @@
                 this.elRekor.innerText = ""; this.elRekor.classList.remove('new');
                 this.elModal.style.display = 'none';
 
-                this.zombies = []; this.bullets = []; this.particles = []; this.lastSpawn = 0; this.isOver = false;
+                this.zombies = []; this.bullets = []; this.particles = []; this.shockwaves = []; this.lastSpawn = 0; this.isOver = false;
                 this.spawnRate = difficulty === 'easy' ? 4000 : (difficulty === 'medium' ? 3000 : 2000);
                 this.playerPos = { x: 0, y: 0 };
             }
@@ -641,7 +641,8 @@
                     let kena = b.target && !b.target.dead && b.kenaTarget();
                     if (kena) {
                         // PELURU MENGHENAI ZOMBIE: zombie mati di titik ini
-                        this.createExplosion(b.target.x, b.target.y, '#2ecc71');
+                        if (b.target.doomed) this.createDramaticExplosion(b.target.x, b.target.y);
+                        else this.createExplosion(b.target.x, b.target.y, '#2ecc71');
                         const idx = this.zombies.indexOf(b.target);
                         if (idx !== -1) this.zombies.splice(idx, 1);
                         b.target.dead = true;
@@ -660,6 +661,10 @@
                 for (let i = this.particles.length - 1; i >= 0; i--) {
                     let p = this.particles[i]; p.update(dt); p.draw(this.ctx);
                     if(p.life <= 0) this.particles.splice(i,1);
+                }
+                for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+                    let sw = this.shockwaves[i]; sw.update(dt); sw.draw(this.ctx);
+                    if(sw.life <= 0) this.shockwaves.splice(i,1);
                 }
             }
             drawPlayer() {
@@ -701,6 +706,12 @@
                 this.input = "";
             }
             createExplosion(x,y,c) { for(let i=0; i<12; i++) this.particles.push(new Particle(x,y,c)); }
+            createDramaticExplosion(x,y) {
+                // Ledakan dramatis untuk zombie yang ditandai doomed: gelombang kejut + semburan besar + percikan kilat
+                this.shockwaves.push(new Shockwave(x,y));
+                for(let i=0; i<26; i++) this.particles.push(new Particle(x,y, i%4===0 ? '#f1c40f' : '#2ecc71', true));
+                for(let i=0; i<10; i++) this.particles.push(new Particle(x,y,'#ffffff', true));
+            }
             updateHearts() { this.elHearts.innerText = "❤️".repeat(this.lives); }
             updateRekorLine() {
                 if (gameMode !== 1 || !this.elRekor) return;
@@ -803,9 +814,29 @@
             outOfBounds(w,h) { return this.y<-50||this.x<-50||this.x>w+50; }
         }
         class Particle {
-            constructor(x, y, c) { this.x=x; this.y=y; this.c=c; this.life=1; this.vx=(Math.random()-0.5)*720; this.vy=(Math.random()-0.5)*720; }
+            constructor(x, y, c, besar) {
+                this.x=x; this.y=y; this.c=c; this.life=1;
+                const tenaga = besar ? 1.6 : 1;   // partikel besar: semburan lebih kencang
+                this.vx=(Math.random()-0.5)*720*tenaga; this.vy=(Math.random()-0.5)*720*tenaga;
+                this.r = besar ? 4 + Math.random()*4 : 5;
+            }
             update(dt) { const s = (dt || 16.7) / 1000; this.x+=this.vx*s; this.y+=this.vy*s; this.life-=3*s; }
-            draw(ctx) { ctx.globalAlpha=Math.max(0,this.life); ctx.fillStyle=this.c; ctx.beginPath(); ctx.arc(this.x,this.y,5,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+            draw(ctx) { ctx.globalAlpha=Math.max(0,this.life); ctx.fillStyle=this.c; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+        }
+        class Shockwave {
+            // Gelombang kejut: lingkaran mengembang memudar dari titik ledakan
+            constructor(x,y) { this.x=x; this.y=y; this.r=8; this.life=1; }
+            update(dt) { const s=(dt||16.7)/1000; this.r += 420*s; this.life -= 2.8*s; }
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life) * 0.8;
+                ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.stroke();
+                ctx.globalAlpha = Math.max(0, this.life) * 0.4;
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(this.x,this.y,this.r*0.75,0,Math.PI*2); ctx.stroke();
+                ctx.restore();
+            }
         }
 
         // --- GLOBAL LOGIC ---
