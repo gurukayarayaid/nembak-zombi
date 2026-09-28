@@ -614,7 +614,7 @@
                 this.elRekor.innerText = ""; this.elRekor.classList.remove('new');
                 this.elModal.style.display = 'none';
 
-                this.zombies = []; this.bullets = []; this.particles = []; this.shockwaves = []; this.lastSpawn = 0; this.isOver = false;
+                this.zombies = []; this.bullets = []; this.particles = []; this.shockwaves = []; this.guncang = 0; this.lastSpawn = 0; this.isOver = false;
                 this.spawnRate = difficulty === 'easy' ? 4000 : (difficulty === 'medium' ? 3000 : 2000);
                 this.playerPos = { x: 0, y: 0 };
             }
@@ -625,6 +625,11 @@
             update(dt) {
                 if (this.isOver) return;
                 this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
+                // getaran layar: aktif sesaat setelah ledakan dramatis, melemah cepat lalu berhenti
+                this.guncang = Math.max(0, this.guncang - 32 * (dt || 16.7) / 1000);
+                const guncangX = (Math.random()-0.5) * 2 * this.guncang, guncangY = (Math.random()-0.5) * 2 * this.guncang;
+                this.ctx.save();
+                this.ctx.translate(guncangX, guncangY);
                 this.drawPlayer();
                 const now = Date.now();
                 if (now - this.lastSpawn > this.spawnRate) { this.zombies.push(new Zombie(this.canvas.width, this.level, this.zombies)); this.lastSpawn = now; }
@@ -667,6 +672,7 @@
                     let sw = this.shockwaves[i]; sw.update(dt); sw.draw(this.ctx);
                     if(sw.life <= 0) this.shockwaves.splice(i,1);
                 }
+                this.ctx.restore();
             }
             drawPlayer() {
                 const {x, y} = this.playerPos; this.ctx.fillStyle = this.pid === 1 ? '#3498db' : '#e74c3c';
@@ -708,8 +714,9 @@
             }
             createExplosion(x,y,c) { for(let i=0; i<12; i++) this.particles.push(new Particle(x,y,c)); }
             createDramaticExplosion(x,y) {
-                // Ledakan dramatis untuk zombie yang ditandai doomed: gelombang kejut + semburan besar + percikan kilat
+                // Ledakan dramatis untuk zombie yang ditandai doomed: gelombang kejut + semburan besar + percikan kilat + getaran layar
                 this.shockwaves.push(new Shockwave(x,y));
+                this.guncang = 9;   // getaran layar sesaat, melemah sendiri di update()
                 for(let i=0; i<26; i++) this.particles.push(new Particle(x,y, i%4===0 ? '#f1c40f' : '#2ecc71', true));
                 for(let i=0; i<10; i++) this.particles.push(new Particle(x,y,'#ffffff', true));
             }
