@@ -825,7 +825,30 @@
                 ctx.beginPath(); ctx.roundRect(this.x-55,this.y-(this.r*2.2),110,32,8); ctx.fill();
                 ctx.shadowBlur=0; ctx.strokeStyle="#2c3e50"; ctx.lineWidth=2; ctx.stroke();
                 ctx.fillStyle="#2c3e50"; ctx.font="bold 20px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
-                ctx.fillText(this.text, this.x, this.y-(this.r*2.2)+16);
+                const papanY = this.y-(this.r*2.2)+16;
+                if (this.text.includes('?')) {
+                    // soal suku yang hilang: tanda ? diberi warna aksen oranye + halo agar terlihat spesial
+                    ctx.textAlign = "left";
+                    const bagian = this.text.split('?');
+                    const lebarTanya = ctx.measureText('?').width;
+                    let totalLebar = lebarTanya * (bagian.length - 1);
+                    for (const bg of bagian) totalLebar += ctx.measureText(bg).width;
+                    let px = this.x - totalLebar / 2;
+                    for (let i = 0; i < bagian.length; i++) {
+                        ctx.fillStyle = "#2c3e50";
+                        ctx.fillText(bagian[i], px, papanY);
+                        px += ctx.measureText(bagian[i]).width;
+                        if (i < bagian.length - 1) {
+                            ctx.fillStyle = "#e67e22";
+                            ctx.shadowColor = "rgba(230,126,34,0.9)"; ctx.shadowBlur = 6;
+                            ctx.fillText('?', px, papanY);
+                            ctx.shadowBlur = 0;
+                            px += lebarTanya;
+                        }
+                    }
+                    ctx.textAlign = "center";
+                }
+                else ctx.fillText(this.text, this.x, papanY);
             }
         }
         function r(n) { return Math.floor(Math.random()*n); }
