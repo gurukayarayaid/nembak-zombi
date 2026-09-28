@@ -749,6 +749,18 @@
             draw(ctx) {
                 if(this.image && this.image.complete && this.image.naturalWidth > 0) ctx.drawImage(this.image, this.x-this.r, this.y-this.r, this.r*2, this.r*2);
                 else { ctx.fillStyle='#27ae60'; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); }
+                if (this.doomed && !this.dead) {
+                    // KILAT PUTIH: tanda peluru sedang menuju zombie ini
+                    const denyut = 0.25 + 0.25 * Math.sin(performance.now() / 70);
+                    ctx.save();
+                    ctx.globalAlpha = denyut;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.r + 3, 0, Math.PI*2); ctx.fill();
+                    ctx.globalAlpha = Math.min(1, denyut + 0.35);
+                    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.r + 6, 0, Math.PI*2); ctx.stroke();
+                    ctx.restore();
+                }
                 ctx.fillStyle="rgba(255,255,255,0.95)"; ctx.shadowColor="rgba(0,0,0,0.5)"; ctx.shadowBlur=4;
                 ctx.beginPath(); ctx.roundRect(this.x-55,this.y-(this.r*2.2),110,32,8); ctx.fill();
                 ctx.shadowBlur=0; ctx.strokeStyle="#2c3e50"; ctx.lineWidth=2; ctx.stroke();
