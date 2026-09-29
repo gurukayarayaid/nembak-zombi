@@ -334,6 +334,8 @@
         #tabel-riwayat th { color: #f7dc6f; font-size: 0.75rem; text-transform: uppercase; }
         .menang { color: #2ecc71; font-weight: bold; }
         .kalah { color: #e74c3c; }
+        .bintang { color: #f1c40f; font-size: 1.05rem; letter-spacing: 1px; white-space: nowrap; }
+        .bintang .kosong { color: #555; }
         .statistik-subjudul { color: #eee; font-size: 1rem; margin: 10px 0 4px; text-shadow: 1px 1px 0 #000; }
 
         /* GRAFIK BATANG: perkembangan skor 10 sesi terakhir */
@@ -500,6 +502,7 @@
             <div id="grafik-skor"></div>
             <h3 class="statistik-subjudul">Rekap Per Murid</h3>
             <table id="tabel-permurid"></table>
+            <div class="grafik-ket">Bintang prestasi: ★ skor terbaik 100 (CEPAT) · ★★ 250 (SEDANG) · ★★★ 500 (LAMA)</div>
             <h3 class="statistik-subjudul">10 Sesi Terakhir</h3>
             <table id="tabel-riwayat"></table>
             <button class="restart-btn-in-game" style="margin-top:14px;" onclick="tutupStatistik()">Tutup</button>
@@ -827,6 +830,11 @@
         }
         muatNamaTersimpan();
         function esc(t) { return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }   // nama bebas diketik: amankan saat dirender
+        // Bintang prestasi murid: ambangnya = sasaran kemenangan game (100/250/500 poin terbaik)
+        function renderBintang(terbaik) {
+            const n = terbaik >= 500 ? 3 : (terbaik >= 250 ? 2 : (terbaik >= 100 ? 1 : 0));
+            return `<span class="bintang">${'★'.repeat(n)}<span class="kosong">${'☆'.repeat(3 - n)}</span></span>`;
+        }
         function formatWaktu(ts) {
             const d = new Date(ts);
             const hari = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
@@ -872,9 +880,9 @@
                 .sort((a, b) => b.terbaik - a.terbaik);
             document.getElementById('tabel-permurid').innerHTML = daftarMurid.length === 0
                 ? `<tr><td style="padding:14px 8px; color:#bbb;">Belum ada data murid.</td></tr>`
-                : `<tr><th>Murid</th><th>Sesi</th><th>Terbaik</th><th>Rata-rata</th><th>Combo</th><th>Menang</th></tr>` +
+                : `<tr><th>Murid</th><th>Bintang</th><th>Sesi</th><th>Terbaik</th><th>Rata-rata</th><th>Combo</th><th>Menang</th></tr>` +
                   daftarMurid.map(s =>
-                      `<tr><td style="text-align:left; font-weight:bold;">${esc(s.nama)}</td><td>${s.sesi}</td><td><b>${s.terbaik}</b></td><td>${s.rata}</td><td>x${s.combo}</td><td>${s.menang}</td></tr>`
+                      `<tr><td style="text-align:left; font-weight:bold;">${esc(s.nama)}</td><td>${renderBintang(s.terbaik)}</td><td>${s.sesi}</td><td><b>${s.terbaik}</b></td><td>${s.rata}</td><td>x${s.combo}</td><td>${s.menang}</td></tr>`
                   ).join('');
             const terakhir = riwayat.slice(-10).reverse();
             document.getElementById('tabel-riwayat').innerHTML = total === 0
