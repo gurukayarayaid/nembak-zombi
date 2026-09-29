@@ -334,6 +334,16 @@
         #tabel-riwayat th { color: #f7dc6f; font-size: 0.75rem; text-transform: uppercase; }
         .menang { color: #2ecc71; font-weight: bold; }
         .kalah { color: #e74c3c; }
+        .statistik-subjudul { color: #eee; font-size: 1rem; margin: 10px 0 4px; text-shadow: 1px 1px 0 #000; }
+
+        /* INPUT NAMA MURID di langkah pilih materi */
+        .nama-wrap { margin: 4px 0 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        .nama-input {
+            background: rgba(0,0,0,0.55); color: #fff; border: 2px solid #f1c40f; border-radius: 12px;
+            padding: 8px 14px; font-size: 1.05rem; text-align: center; width: 200px; max-width: 44vw;
+            outline: none; touch-action: manipulation;
+        }
+        .nama-input:focus { border-color: #2ecc71; }
 
         /* MODALS */
         .modal-overlay {
@@ -441,6 +451,13 @@
 
         <div id="step-topic" class="menu-step hidden">
             <h2 style="color:#eee; margin-bottom:15px; font-size:1.5rem; text-shadow:2px 2px 2px #000;">Pilih Materi</h2>
+            <div id="nama-wrap-1" class="nama-wrap">
+                <input id="input-nama-p1" class="nama-input" maxlength="12" placeholder="Nama kamu (opsional)">
+            </div>
+            <div id="nama-wrap-2" class="nama-wrap" style="display:none;">
+                <input id="input-nama-p2a" class="nama-input" maxlength="12" placeholder="Nama Pemain 1">
+                <input id="input-nama-p2b" class="nama-input" maxlength="12" placeholder="Nama Pemain 2">
+            </div>
             <div class="topic-grid">
                 <button class="topic-btn" onclick="startGame('add')">Penjumlahan (+)</button>
                 <button class="topic-btn" onclick="startGame('sub')">Pengurangan (-)</button>
@@ -458,6 +475,9 @@
         <div class="statistik-kotak">
             <h2 class="statistik-judul">📊 Statistik Kelas</h2>
             <div class="stat-ringkasan" id="stat-ringkasan"></div>
+            <h3 class="statistik-subjudul">Rekap Per Murid</h3>
+            <table id="tabel-permurid"></table>
+            <h3 class="statistik-subjudul">10 Sesi Terakhir</h3>
             <table id="tabel-riwayat"></table>
             <button class="restart-btn-in-game" style="margin-top:14px;" onclick="tutupStatistik()">Tutup</button>
             <button class="restart-btn-in-game" style="margin-top:14px; background:#c0392b; font-size:1.1rem; padding:10px 22px;" onclick="hapusRiwayat()">Bersihkan Riwayat 🗑</button>
@@ -620,13 +640,14 @@
         // --- NAVIGATION ---
         function goToDifficulty(mode) { gameMode = mode; gantiLangkah('step-player', 'step-difficulty'); }
         function backToPlayer() { gantiLangkah('step-difficulty', 'step-player'); }
-        function handleDifficultySelect(diff) { difficulty = diff; if(gameMode===1) gantiLangkah('step-difficulty', 'step-target'); else gantiLangkah('step-difficulty', 'step-topic'); }
+        function handleDifficultySelect(diff) { difficulty = diff; if(gameMode===1) gantiLangkah('step-difficulty', 'step-target'); else { siapkanInputNama(); gantiLangkah('step-difficulty', 'step-topic'); } }
         function backToDifficulty() { gantiLangkah('step-target', 'step-difficulty'); }
-        function goToTopicFromTarget(score) { targetScore = score; gantiLangkah('step-target', 'step-topic'); }
+        function goToTopicFromTarget(score) { targetScore = score; siapkanInputNama(); gantiLangkah('step-target', 'step-topic'); }
         function backToTargetOrDiff() { if(gameMode===1) gantiLangkah('step-topic', 'step-target'); else gantiLangkah('step-topic', 'step-difficulty'); }
 
         function startGame(selectedTopic) {
             topic = selectedTopic;
+            bacaInputNama();
             document.getElementById('menu-screen').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
             switchMusic(true);
@@ -745,7 +766,7 @@
         const NAMA_MATERI = { add: 'Tambah', sub: 'Kurang', mul: 'Kali', div: 'Bagi', mix: 'Campur', int: 'Bulat' };
         const NAMA_SULIT = { easy: 'Mudah', medium: 'Sedang', hard: 'Sulit' };
         function catatSesi(pid, skor, comboTerbaik, menang) {
-            const entri = { t: Date.now(), p: pid, skor: skor, combo: comboTerbaik, menang: menang ? 1 : 0, mode: gameMode, materi: topic, sulit: difficulty };
+            const entri = { t: Date.now(), p: pid, nama: (pid === 1 ? namaP1 : namaP2), skor: skor, combo: comboTerbaik, menang: menang ? 1 : 0, mode: gameMode, materi: topic, sulit: difficulty };
             try {
                 let riwayat = [];
                 const mentah = localStorage.getItem(KUNCI_RIWAYAT);
@@ -759,6 +780,30 @@
             try { const parsed = JSON.parse(localStorage.getItem(KUNCI_RIWAYAT)); if (Array.isArray(parsed)) return parsed; } catch (e) {}
             return [];
         }
+
+        // --- NAMA MURID: diisi di langkah pilih materi, ikut tersimpan di tiap catatan sesi ---
+        let namaP1 = 'Murid', namaP2 = 'Murid 2';
+        function siapkanInputNama() {
+            const dua = gameMode === 2;
+            document.getElementById('nama-wrap-1').style.display = dua ? 'none' : 'flex';
+            document.getElementById('nama-wrap-2').style.display = dua ? 'flex' : 'none';
+        }
+        function bacaInputNama() {
+            const v1 = (gameMode === 2 ? document.getElementById('input-nama-p2a').value : document.getElementById('input-nama-p1').value).trim().slice(0, 12);
+            const v2 = document.getElementById('input-nama-p2b').value.trim().slice(0, 12);
+            namaP1 = v1 || 'Murid';
+            namaP2 = v2 || 'Murid 2';
+            try { localStorage.setItem('nembak-zombi-nama-p1', namaP1); localStorage.setItem('nembak-zombi-nama-p2', namaP2); } catch (e) {}
+        }
+        function muatNamaTersimpan() {
+            try {
+                const n1 = localStorage.getItem('nembak-zombi-nama-p1'), n2 = localStorage.getItem('nembak-zombi-nama-p2');
+                if (n1) { document.getElementById('input-nama-p1').value = n1; document.getElementById('input-nama-p2a').value = n1; }
+                if (n2) document.getElementById('input-nama-p2b').value = n2;
+            } catch (e) {}
+        }
+        muatNamaTersimpan();
+        function esc(t) { return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }   // nama bebas diketik: amankan saat dirender
         function formatWaktu(ts) {
             const d = new Date(ts);
             const hari = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
@@ -778,12 +823,28 @@
                 `<div class="stat-kartu"><div class="angka">${rata}</div><div class="label">Rata-rata</div></div>` +
                 `<div class="stat-kartu"><div class="angka">x${comboTop}</div><div class="label">Combo Terbaik</div></div>` +
                 `<div class="stat-kartu"><div class="angka">${menang}/${total}</div><div class="label">Menang</div></div>`;
+            // rekap dikelompokkan per nama murid, diurutkan dari skor terbaik
+            const perNama = {};
+            riwayat.forEach(r => {
+                const kunci = r.nama || '—';
+                const s = perNama[kunci] || (perNama[kunci] = { sesi: 0, total: 0, terbaik: 0, combo: 0, menang: 0 });
+                s.sesi++; s.total += (r.skor || 0); s.terbaik = Math.max(s.terbaik, r.skor || 0); s.combo = Math.max(s.combo, r.combo || 0); if (r.menang) s.menang++;
+            });
+            const daftarMurid = Object.keys(perNama)
+                .map(k => ({ nama: k, sesi: perNama[k].sesi, terbaik: perNama[k].terbaik, rata: Math.round(perNama[k].total / perNama[k].sesi), combo: perNama[k].combo, menang: perNama[k].menang }))
+                .sort((a, b) => b.terbaik - a.terbaik);
+            document.getElementById('tabel-permurid').innerHTML = daftarMurid.length === 0
+                ? `<tr><td style="padding:14px 8px; color:#bbb;">Belum ada data murid.</td></tr>`
+                : `<tr><th>Murid</th><th>Sesi</th><th>Terbaik</th><th>Rata-rata</th><th>Combo</th><th>Menang</th></tr>` +
+                  daftarMurid.map(s =>
+                      `<tr><td style="text-align:left; font-weight:bold;">${esc(s.nama)}</td><td>${s.sesi}</td><td><b>${s.terbaik}</b></td><td>${s.rata}</td><td>x${s.combo}</td><td>${s.menang}</td></tr>`
+                  ).join('');
             const terakhir = riwayat.slice(-10).reverse();
             document.getElementById('tabel-riwayat').innerHTML = total === 0
                 ? `<tr><td style="padding:18px 8px; color:#bbb;">Belum ada sesi selesai. Riwayat muncul setelah murid menang atau kalah.</td></tr>`
-                : `<tr><th>Waktu</th><th>Pemain</th><th>Materi</th><th>Skor</th><th>Combo</th><th>Hasil</th></tr>` +
+                : `<tr><th>Waktu</th><th>Murid</th><th>Materi</th><th>Skor</th><th>Combo</th><th>Hasil</th></tr>` +
                   terakhir.map(r =>
-                      `<tr><td>${formatWaktu(r.t)}</td><td>${r.mode === 2 ? 'P' + r.p : '—'}</td><td>${NAMA_MATERI[r.materi] || r.materi || '?'} · ${NAMA_SULIT[r.sulit] || r.sulit || '?'}</td><td><b>${r.skor}</b></td><td>x${r.combo || 0}</td><td class="${r.menang ? 'menang' : 'kalah'}">${r.menang ? 'Menang' : 'Kalah'}</td></tr>`
+                      `<tr><td>${formatWaktu(r.t)}</td><td>${esc(r.nama || '—')}${r.mode === 2 ? ' (P' + r.p + ')' : ''}</td><td>${NAMA_MATERI[r.materi] || r.materi || '?'} · ${NAMA_SULIT[r.sulit] || r.sulit || '?'}</td><td><b>${r.skor}</b></td><td>x${r.combo || 0}</td><td class="${r.menang ? 'menang' : 'kalah'}">${r.menang ? 'Menang' : 'Kalah'}</td></tr>`
                   ).join('');
             document.getElementById('statistik-modal').style.display = 'flex';
         }
