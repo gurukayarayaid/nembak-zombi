@@ -311,6 +311,25 @@
         }
         #btn-statistik:active { transform: translateY(2px); }
 
+        /* PAPAN PERINGKAT: podium 3 murid terbaik di menu utama, agar murid semangat */
+        #podium-kelas { display: none; margin: 8px auto 4px; max-width: 400px; }
+        #podium-kelas.tampil { display: block; }
+        .podium-judul { color: #f7dc6f; font-weight: bold; font-size: 0.95rem; text-shadow: 1px 1px 0 #000; margin-bottom: 6px; }
+        .podium-baris { display: flex; align-items: flex-end; justify-content: center; gap: 8px; }
+        .podium-slot { flex: 1; max-width: 120px; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+        .podium-nama { font-size: 0.85rem; font-weight: bold; color: #fff; text-shadow: 1px 1px 0 #000; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .podium-skor { font-size: 0.72rem; color: #f7dc6f; text-shadow: 1px 1px 0 #000; margin: 1px 0 3px; }
+        .podium-dudukan {
+            width: 100%; border-radius: 8px 8px 0 0; padding-top: 4px;
+            display: flex; align-items: flex-start; justify-content: center;
+            transform-origin: bottom; animation: podiumNaik 0.5s ease-out backwards;
+            border: 2px solid rgba(255,255,255,0.35); border-bottom: none;
+        }
+        .podium-dudukan.emas { height: 72px; background: linear-gradient(#f1c40f, #b7950b); animation-delay: 0.25s; }
+        .podium-dudukan.perak { height: 52px; background: linear-gradient(#bdc3c7, #7f8c8d); animation-delay: 0.05s; }
+        .podium-dudukan.perunggu { height: 40px; background: linear-gradient(#e59866, #935116); animation-delay: 0.45s; }
+        @keyframes podiumNaik { from { transform: scaleY(0); } }
+
         /* MODAL STATISTIK GURU: ringkasan + daftar sesi terakhir */
         #statistik-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -463,6 +482,7 @@
                 <img src="assets/btn-1p-id.png" class="mode-btn-img" onclick="initAudio(); goToDifficulty(1)" alt="1 Pemain">
                 <img src="assets/btn-2p-id.png" class="mode-btn-img" onclick="initAudio(); goToDifficulty(2)" alt="2 Pemain">
             </div>
+            <div id="podium-kelas"></div>
         </div>
 
         <!-- STEP 2: DIFFICULTY SELECT -->
@@ -734,7 +754,7 @@
             document.getElementById('step-difficulty').classList.add('hidden'); document.getElementById('step-difficulty').classList.remove('keluar');
             document.getElementById('step-player').classList.remove('hidden'); document.getElementById('step-player').classList.remove('keluar');
             switchMusic(false); confettis = []; confCtx.clearRect(0,0,confCanvas.width, confCanvas.height);
-            tampilRekorMenu();
+            tampilRekorMenu(); tampilPodiumKelas();   // podium ikut diperbarui setelah sesi baru tercatat
         }
 
         // --- JEDA / LANJUT: dunia dibekukan total agar murid bisa istirahat tanpa kehilangan nyawa ---
@@ -907,6 +927,21 @@
                 setTimeout(() => URL.revokeObjectURL(url), 500);
             } catch (e) {}
         }
+
+        // --- PAPAN PERINGKAT: podium 3 murid terbaik di menu utama ---
+        function tampilPodiumKelas() {
+            const el = document.getElementById('podium-kelas');
+            if (!el) return;
+            const top3 = agregatPerMurid(bacaRiwayat()).slice(0, 3);   // sudah terurut dari skor terbaik
+            if (top3.length === 0) { el.classList.remove('tampil'); el.innerHTML = ''; return; }
+            const slot = (s, kelas, medali) => s
+                ? `<div class="podium-slot"><div class="podium-nama">${esc(s.nama)}</div><div class="podium-skor">${s.terbaik} poin</div><div class="podium-dudukan ${kelas}">${medali}</div></div>`
+                : `<div class="podium-slot"></div>`;   // slot kosong agar susunan podium tetap simetris
+            el.innerHTML = `<div class="podium-judul">🏆 Podium Kelas</div><div class="podium-baris">` +
+                slot(top3[1], 'perak', '🥈') + slot(top3[0], 'emas', '🥇') + slot(top3[2], 'perunggu', '🥉') + `</div>`;
+            el.classList.add('tampil');
+        }
+        tampilPodiumKelas();   // tampil saat halaman dibuka (dipanggil di sini agar konstanta riwayat sudah siap)
         function formatWaktu(ts) {
             const d = new Date(ts);
             const hari = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
