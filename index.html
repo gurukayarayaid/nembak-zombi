@@ -278,6 +278,29 @@
         }
         #btn-fullscreen:active { transform: translateY(2px); }
 
+        /* TOMBOL JEDA: mengambang di sebelah kiri tombol layar penuh, hanya tampil saat bermain */
+        #btn-jeda {
+            position: fixed; top: 10px; right: 62px; z-index: 100;
+            width: 46px; height: 46px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.35);
+            background: rgba(0,0,0,0.55); color: #fff; font-size: 1.5rem; line-height: 1;
+            cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center;
+            touch-action: manipulation; user-select: none;
+        }
+        #btn-jeda:active { transform: translateY(2px); }
+
+        /* OVERLAY JEDA: menutupi seluruh layar saat istirahat, keypad ikut terblokir sentuhan */
+        #jeda-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75); display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            color: white; z-index: 95; text-align: center; backdrop-filter: blur(4px);
+        }
+        .jeda-title {
+            font-size: clamp(2.2rem, 5vw, 4rem); margin: 0 0 14px;
+            color: #f1c40f; text-shadow: 3px 3px 0 #000;
+        }
+
         /* MODALS */
         .modal-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -397,6 +420,12 @@
 
     <!-- GAME CONTAINER -->
     <div id="game-container" style="display:none;">
+        <button id="btn-jeda" title="Jeda" onclick="toggleJeda()">⏸</button>
+        <div id="jeda-overlay">
+            <h2 class="jeda-title">⏸ Istirahat Dulu</h2>
+            <button class="restart-btn-in-game" onclick="toggleJeda()">▶ Lanjut Main</button>
+            <button class="restart-btn-in-game" onclick="backToMenu()">Menu Utama</button>
+        </div>
         <div id="p1-panel" class="player-panel full-width">
             <div class="canvas-wrapper">
                 <div class="hud-container">
@@ -517,6 +546,7 @@
         // --- GLOBALS ---
         let gameMode = 1; let difficulty = 'medium'; let topic = 'add'; let isRunning = false;
         let p1Game, p2Game; let animId; let targetScore = 250; let pendingStart = null;
+        let sedangJeda = false;   // status jeda: dunia dibekukan total (zombie, timer & nyawa aman)
         let kecepatanZombie = 0.75;   // pengali: 0.5 Lambat, 0.75 Sedang, 1 Cepat
         try { const k = parseFloat(localStorage.getItem('nembak-zombi-kecepatan')); if (k >= 0.25 && k <= 2) kecepatanZombie = k; } catch (e) {}
 
@@ -564,6 +594,8 @@
             else { p1.className = 'player-panel full-width'; p2.style.display = 'none'; }
 
             confettis = []; 
+            sedangJeda = false; document.getElementById('jeda-overlay').style.display = 'none';   // sesi baru: pastikan tidak bek dari jeda
+            document.getElementById('btn-jeda').textContent = '⏸';
             isRunning = false; cancelAnimationFrame(animId);   // hentikan loop lama bila masih berjalan
             if (pendingStart) { clearTimeout(pendingStart); }
             pendingStart = setTimeout(() => {
@@ -578,6 +610,8 @@
 
         function backToMenu() {
             isRunning = false; cancelAnimationFrame(animId);
+            sedangJeda = false;   // keluar dari jeda bila sedang istirahat
+            document.getElementById('jeda-overlay').style.display = 'none';
             if (pendingStart) { clearTimeout(pendingStart); pendingStart = null; }   // batalkan start yang masih tertunda agar tak menyala sendiri di menu
             document.getElementById('p1-modal').style.display = 'none'; document.getElementById('p2-modal').style.display = 'none';
             document.getElementById('game-container').style.display = 'none'; document.getElementById('menu-screen').style.display = 'flex';
@@ -587,6 +621,23 @@
             document.getElementById('step-player').classList.remove('hidden'); document.getElementById('step-player').classList.remove('keluar');
             switchMusic(false); confettis = []; confCtx.clearRect(0,0,confCanvas.width, confCanvas.height);
             tampilRekorMenu();
+        }
+
+        // --- JEDA / LANJUT: dunia dibekukan total agar murid bisa istirahat tanpa kehilangan nyawa ---
+        function toggleJeda() { sedangJeda ? lanjutkanDariJeda() : mulaiJeda(); }
+        function mulaiJeda() {
+            if (!isRunning || sedangJeda) return;   // tak bisa jeda saat menu/modal akhir, atau saat sudah jeda
+            sedangJeda = true;
+            document.getElementById('jeda-overlay').style.display = 'flex';
+            document.getElementById('btn-jeda').textContent = '▶';
+            bgmGame.pause();   // musik ikut berhenti saat istirahat
+        }
+        function lanjutkanDariJeda() {
+            if (!sedangJeda) return;
+            sedangJeda = false;
+            document.getElementById('jeda-overlay').style.display = 'none';
+            document.getElementById('btn-jeda').textContent = '⏸';
+            if (isRunning) bgmGame.play().catch(() => {});
         }
 
         // Perangkat mobile: kunci orientasi landscape selagi layar penuh (layout 2 pemain dirancang menyamping).
@@ -1037,16 +1088,17 @@
         let _lastT = 0;
         function gameLoop(now) {
             if(!isRunning) return;
+            animId = requestAnimationFrame(gameLoop);   // jadwalkan frame berikutnya lebih dulu agar jeda/berhenti tetap rapi
+            if (sedangJeda) { _lastT = now || 0; return; }   // dunia beku total saat jeda: zombie, timer spawn & nyawa aman
             // dt dipatok 0..50: mencegah dt negatif saat sesi baru dimulai dengan _lastT basi dari sesi sebelumnya
             // (dt negatif membuat guncangan meledak → gambar zombie acak di seluruh layar pada permainan kedua)
             const dt = Math.min(50, Math.max(0, (now || 0) - _lastT));   // ms sejak frame sebelumnya (dibatasi)
             _lastT = now || 0;
             p1Game.update(dt); if(gameMode===2)p2Game.update(dt);
-            animId=requestAnimationFrame(gameLoop);
         }
         window.addEventListener('resize', () => { if(p1Game) p1Game.resize(); if(p2Game) p2Game.resize(); });
         window.addEventListener('keydown', (e) => {
-            if(!isRunning) return;
+            if(!isRunning || sedangJeda) return;   // keyboard juga dibekukan saat jeda
             if((e.key>='0'&&e.key<='9')||e.key==='-') if(p1Game) p1Game.inputNum(e.key);
             if(e.key==='Backspace') if(p1Game) p1Game.clearInput();
             if(e.key==='Enter') if(p1Game) p1Game.fire();
