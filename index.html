@@ -567,6 +567,8 @@
             isRunning = false; cancelAnimationFrame(animId);   // hentikan loop lama bila masih berjalan
             if (pendingStart) { clearTimeout(pendingStart); }
             pendingStart = setTimeout(() => {
+                pendingStart = null;
+                if (document.getElementById('game-container').style.display !== 'flex') return;   // sudah kembali ke menu: batalkan start tertunda
                 p1Game = new GameInstance('canvas1', 1); p1Game.resize();
                 if (gameMode === 2) { p2Game = new GameInstance('canvas2', 2); p2Game.resize(); }
                 setupMultiTouch();
@@ -576,6 +578,7 @@
 
         function backToMenu() {
             isRunning = false; cancelAnimationFrame(animId);
+            if (pendingStart) { clearTimeout(pendingStart); pendingStart = null; }   // batalkan start yang masih tertunda agar tak menyala sendiri di menu
             document.getElementById('p1-modal').style.display = 'none'; document.getElementById('p2-modal').style.display = 'none';
             document.getElementById('game-container').style.display = 'none'; document.getElementById('menu-screen').style.display = 'flex';
             document.getElementById('step-topic').classList.add('hidden'); document.getElementById('step-topic').classList.remove('keluar');
