@@ -350,6 +350,17 @@
             display: flex; align-items: flex-end; gap: 4px;
             height: 110px; padding: 18px 4px 0;
             border-bottom: 2px solid rgba(255,255,255,0.35);
+            position: relative;
+        }
+        /* GARIS RATA-RATA: batang di bawah garis = sesi di bawah performa biasa */
+        .garis-rata {
+            position: absolute; left: 4px; right: 4px; height: 0;
+            border-top: 2px dashed #f7dc6f; pointer-events: none; z-index: 2;
+        }
+        .garis-rata span {
+            position: absolute; right: 0; bottom: 3px;
+            font-size: 0.68rem; font-weight: bold; color: #f7dc6f;
+            text-shadow: 1px 1px 0 #000; white-space: nowrap;
         }
         .grafik-bar {
             flex: 1; min-width: 10px; max-width: 46px; margin: 0 auto;
@@ -918,16 +929,18 @@
             // grafik batang perkembangan skor 10 sesi terakhir (kiri = terlama, kanan = terbaru)
             const grafikEl = document.getElementById('grafik-skor');
             const sepuluh = riwayat.slice(-10);
+            let maksSkor = 1, rata10 = 0;
             if (sepuluh.length === 0) {
                 grafikEl.innerHTML = `<div style="color:#bbb; padding:10px 4px;">Belum ada data untuk grafik.</div>`;
             } else {
-                const maksSkor = Math.max(...sepuluh.map(r => r.skor || 0), 1);
+                maksSkor = Math.max(...sepuluh.map(r => r.skor || 0), 1);
+                rata10 = Math.round(sepuluh.reduce((s, r) => s + (r.skor || 0), 0) / sepuluh.length);
                 grafikEl.innerHTML = `<div class="grafik-bars">` + sepuluh.map(r => {
                     const tinggi = Math.max(4, Math.round((r.skor || 0) / maksSkor * 100));
                     const info = `${r.nama || '—'} — ${r.skor || 0} poin (${formatWaktu(r.t)})`;
                     return `<div class="grafik-bar ${r.menang ? '' : 'kalah'}" style="height:${tinggi}%" title="${esc(info)}"><span class="val">${r.skor || 0}</span></div>`;
-                }).join('') + `</div>` +
-                    `<div class="grafik-ket">Skor maksimum grafik: ${maksSkor} · batang hijau = menang, merah = kalah</div>`;
+                }).join('') + (rata10 > 0 ? `<div class="garis-rata"><span>Rata-rata: ${rata10}</span></div>` : '') + `</div>` +
+                    `<div class="grafik-ket">Skor maksimum grafik: ${maksSkor} · garis kuning = rata-rata ${rata10} · batang hijau = menang, merah = kalah</div>`;
             }
             // rekap dikelompokkan per nama murid, diurutkan dari skor terbaik (helper sama dgn CSV)
             const daftarMurid = agregatPerMurid(riwayat);
@@ -945,6 +958,15 @@
                       `<tr><td>${formatWaktu(r.t)}</td><td>${esc(r.nama || '—')}${r.mode === 2 ? ' (P' + r.p + ')' : ''}</td><td>${NAMA_MATERI[r.materi] || r.materi || '?'} · ${NAMA_SULIT[r.sulit] || r.sulit || '?'}</td><td><b>${r.skor}</b></td><td>x${r.combo || 0}</td><td class="${r.menang ? 'menang' : 'kalah'}">${r.menang ? 'Menang' : 'Kalah'}</td></tr>`
                   ).join('');
             document.getElementById('statistik-modal').style.display = 'flex';
+            // posisikan garis rata-rata SETELAH modal tampil: barulah ukuran layout nyata terbaca
+            // (saat modal masih display:none semua ukuran = 0 dan posisi jadi salah)
+            if (rata10 > 0) {
+                const barsEl = grafikEl.querySelector('.grafik-bars');
+                const padAtas = parseFloat(getComputedStyle(barsEl).paddingTop) || 0;
+                const tinggiIsi = barsEl.clientHeight - padAtas;   // tinggi area batang (tinggi % batang dihitung pada area ini)
+                // garis diukur dari dasar wadah: skala skor = (skor/maks) × tinggiIsi — padding atas TIDAK diikutkan
+                grafikEl.querySelector('.garis-rata').style.bottom = Math.round((rata10 / maksSkor) * tinggiIsi) + 'px';
+            }
         }
         function tutupStatistik() { document.getElementById('statistik-modal').style.display = 'none'; }
         function hapusRiwayat() {
