@@ -1034,7 +1034,9 @@
         let _lastT = 0;
         function gameLoop(now) {
             if(!isRunning) return;
-            const dt = Math.min(50, (now || 0) - _lastT);   // ms sejak frame sebelumnya (dibatasi)
+            // dt dipatok 0..50: mencegah dt negatif saat sesi baru dimulai dengan _lastT basi dari sesi sebelumnya
+            // (dt negatif membuat guncangan meledak → gambar zombie acak di seluruh layar pada permainan kedua)
+            const dt = Math.min(50, Math.max(0, (now || 0) - _lastT));   // ms sejak frame sebelumnya (dibatasi)
             _lastT = now || 0;
             p1Game.update(dt); if(gameMode===2)p2Game.update(dt);
             animId=requestAnimationFrame(gameLoop);
