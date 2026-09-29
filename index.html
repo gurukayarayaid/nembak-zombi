@@ -336,6 +336,27 @@
         .kalah { color: #e74c3c; }
         .statistik-subjudul { color: #eee; font-size: 1rem; margin: 10px 0 4px; text-shadow: 1px 1px 0 #000; }
 
+        /* GRAFIK BATANG: perkembangan skor 10 sesi terakhir */
+        .grafik-bars {
+            display: flex; align-items: flex-end; gap: 4px;
+            height: 110px; padding: 18px 4px 0;
+            border-bottom: 2px solid rgba(255,255,255,0.35);
+        }
+        .grafik-bar {
+            flex: 1; min-width: 10px; max-width: 46px; margin: 0 auto;
+            background: linear-gradient(#2ecc71, #1e8449);
+            border-radius: 4px 4px 0 0; position: relative;
+            animation: tumbuh 0.4s ease-out; transform-origin: bottom;
+        }
+        .grafik-bar.kalah { background: linear-gradient(#e74c3c, #922b21); }
+        @keyframes tumbuh { from { transform: scaleY(0); } }
+        .grafik-bar .val {
+            position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+            font-size: 0.65rem; font-weight: bold; color: #fff; white-space: nowrap;
+            text-shadow: 1px 1px 0 #000;
+        }
+        .grafik-ket { font-size: 0.72rem; color: #bbb; margin-top: 5px; }
+
         /* INPUT NAMA MURID di langkah pilih materi */
         .nama-wrap { margin: 4px 0 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
         .nama-input {
@@ -475,6 +496,8 @@
         <div class="statistik-kotak">
             <h2 class="statistik-judul">📊 Statistik Kelas</h2>
             <div class="stat-ringkasan" id="stat-ringkasan"></div>
+            <h3 class="statistik-subjudul">Perkembangan Skor (10 Sesi Terakhir)</h3>
+            <div id="grafik-skor"></div>
             <h3 class="statistik-subjudul">Rekap Per Murid</h3>
             <table id="tabel-permurid"></table>
             <h3 class="statistik-subjudul">10 Sesi Terakhir</h3>
@@ -823,6 +846,20 @@
                 `<div class="stat-kartu"><div class="angka">${rata}</div><div class="label">Rata-rata</div></div>` +
                 `<div class="stat-kartu"><div class="angka">x${comboTop}</div><div class="label">Combo Terbaik</div></div>` +
                 `<div class="stat-kartu"><div class="angka">${menang}/${total}</div><div class="label">Menang</div></div>`;
+            // grafik batang perkembangan skor 10 sesi terakhir (kiri = terlama, kanan = terbaru)
+            const grafikEl = document.getElementById('grafik-skor');
+            const sepuluh = riwayat.slice(-10);
+            if (sepuluh.length === 0) {
+                grafikEl.innerHTML = `<div style="color:#bbb; padding:10px 4px;">Belum ada data untuk grafik.</div>`;
+            } else {
+                const maksSkor = Math.max(...sepuluh.map(r => r.skor || 0), 1);
+                grafikEl.innerHTML = `<div class="grafik-bars">` + sepuluh.map(r => {
+                    const tinggi = Math.max(4, Math.round((r.skor || 0) / maksSkor * 100));
+                    const info = `${r.nama || '—'} — ${r.skor || 0} poin (${formatWaktu(r.t)})`;
+                    return `<div class="grafik-bar ${r.menang ? '' : 'kalah'}" style="height:${tinggi}%" title="${esc(info)}"><span class="val">${r.skor || 0}</span></div>`;
+                }).join('') + `</div>` +
+                    `<div class="grafik-ket">Skor maksimum grafik: ${maksSkor} · batang hijau = menang, merah = kalah</div>`;
+            }
             // rekap dikelompokkan per nama murid, diurutkan dari skor terbaik
             const perNama = {};
             riwayat.forEach(r => {
