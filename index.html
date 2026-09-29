@@ -513,6 +513,7 @@
             <h3 class="statistik-subjudul">10 Sesi Terakhir</h3>
             <table id="tabel-riwayat"></table>
             <button class="restart-btn-in-game" style="margin-top:14px;" onclick="tutupStatistik()">Tutup</button>
+            <button class="restart-btn-in-game" style="margin-top:14px; background:#2980b9; font-size:1.1rem; padding:10px 22px;" onclick="unduhCSV()">⬇ Unduh CSV</button>
             <button class="restart-btn-in-game" style="margin-top:14px; background:#c0392b; font-size:1.1rem; padding:10px 22px;" onclick="hapusRiwayat()">Bersihkan Riwayat 🗑</button>
         </div>
     </div>
@@ -844,6 +845,57 @@
             const n = terbaik >= 500 ? 3 : (terbaik >= 250 ? 2 : (terbaik >= 100 ? 1 : 0));
             return `<span class="bintang">${'★'.repeat(n)}<span class="kosong">${'☆'.repeat(3 - n)}</span></span>`;
         }
+        function jumlahBintang(terbaik) { return terbaik >= 500 ? 3 : (terbaik >= 250 ? 2 : (terbaik >= 100 ? 1 : 0)); }
+        // Agregasi rekap per murid — dipakai modal statistik DAN berkas CSV agar tidak pernah berbeda
+        function agregatPerMurid(riwayat) {
+            const perNama = {};
+            riwayat.forEach(r => {
+                const kunci = r.nama || '—';
+                const s = perNama[kunci] || (perNama[kunci] = { sesi: 0, total: 0, terbaik: 0, combo: 0, menang: 0 });
+                s.sesi++; s.total += (r.skor || 0); s.terbaik = Math.max(s.terbaik, r.skor || 0); s.combo = Math.max(s.combo, r.combo || 0); if (r.menang) s.menang++;
+            });
+            return Object.keys(perNama)
+                .map(k => ({ nama: k, sesi: perNama[k].sesi, terbaik: perNama[k].terbaik, rata: Math.round(perNama[k].total / perNama[k].sesi), combo: perNama[k].combo, menang: perNama[k].menang }))
+                .sort((a, b) => b.terbaik - a.terbaik);
+        }
+
+        // --- UNDUH CSV: rekap per murid + riwayat sesi, siap dibuka di Excel ---
+        // Format ramah Excel Indonesia: pemisah titik-koma, BOM UTF-8, tanggal dd/mm/yyyy.
+        function csvAman(nilai) {
+            const t = String(nilai);
+            return /[";\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+        }
+        function buatCSV() {
+            const riwayat = bacaRiwayat();
+            const L = [];
+            L.push('Rekap Per Murid');
+            L.push(['Murid', 'Bintang', 'Sesi', 'Terbaik', 'Rata-rata', 'Combo', 'Menang'].join(';'));
+            agregatPerMurid(riwayat).forEach(s => {
+                L.push([csvAman(s.nama), jumlahBintang(s.terbaik), s.sesi, s.terbaik, s.rata, s.combo, s.menang].join(';'));
+            });
+            L.push('');
+            L.push('Riwayat Sesi');
+            L.push(['Waktu', 'Murid', 'Pemain', 'Mode', 'Materi', 'Kesulitan', 'Skor', 'Combo', 'Hasil'].join(';'));
+            const p2 = n => String(n).padStart(2, '0');
+            riwayat.forEach(r => {
+                const d = new Date(r.t);
+                const waktu = `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+                L.push([waktu, csvAman(r.nama || '—'), 'P' + (r.p || 1), r.mode === 2 ? '2 Pemain' : '1 Pemain', NAMA_MATERI[r.materi] || r.materi || '?', NAMA_SULIT[r.sulit] || r.sulit || '?', r.skor || 0, r.combo || 0, r.menang ? 'Menang' : 'Kalah'].join(';'));
+            });
+            return '\uFEFF' + L.join('\r\n');   // BOM agar Excel mengenali UTF-8; CRLF agar baris rapi
+        }
+        function unduhCSV() {
+            try {
+                const blob = new Blob([buatCSV()], { type: 'text/csv;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const d = new Date(), p2 = n => String(n).padStart(2, '0');
+                a.href = url;
+                a.download = `statistik-nembak-zombi-${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}.csv`;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 500);
+            } catch (e) {}
+        }
         function formatWaktu(ts) {
             const d = new Date(ts);
             const hari = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
@@ -877,16 +929,8 @@
                 }).join('') + `</div>` +
                     `<div class="grafik-ket">Skor maksimum grafik: ${maksSkor} · batang hijau = menang, merah = kalah</div>`;
             }
-            // rekap dikelompokkan per nama murid, diurutkan dari skor terbaik
-            const perNama = {};
-            riwayat.forEach(r => {
-                const kunci = r.nama || '—';
-                const s = perNama[kunci] || (perNama[kunci] = { sesi: 0, total: 0, terbaik: 0, combo: 0, menang: 0 });
-                s.sesi++; s.total += (r.skor || 0); s.terbaik = Math.max(s.terbaik, r.skor || 0); s.combo = Math.max(s.combo, r.combo || 0); if (r.menang) s.menang++;
-            });
-            const daftarMurid = Object.keys(perNama)
-                .map(k => ({ nama: k, sesi: perNama[k].sesi, terbaik: perNama[k].terbaik, rata: Math.round(perNama[k].total / perNama[k].sesi), combo: perNama[k].combo, menang: perNama[k].menang }))
-                .sort((a, b) => b.terbaik - a.terbaik);
+            // rekap dikelompokkan per nama murid, diurutkan dari skor terbaik (helper sama dgn CSV)
+            const daftarMurid = agregatPerMurid(riwayat);
             document.getElementById('tabel-permurid').innerHTML = daftarMurid.length === 0
                 ? `<tr><td style="padding:14px 8px; color:#bbb;">Belum ada data murid.</td></tr>`
                 : `<tr><th>Murid</th><th>Bintang</th><th>Sesi</th><th>Terbaik</th><th>Rata-rata</th><th>Combo</th><th>Menang</th></tr>` +
