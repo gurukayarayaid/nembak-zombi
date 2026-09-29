@@ -301,6 +301,40 @@
             color: #f1c40f; text-shadow: 3px 3px 0 #000;
         }
 
+        /* TOMBOL STATISTIK GURU di menu utama */
+        #btn-statistik {
+            margin-top: 10px; padding: 8px 18px; border-radius: 50px;
+            background: rgba(0,0,0,0.55); color: #f7dc6f; font-weight: bold;
+            border: 2px solid rgba(255,255,255,0.35); cursor: pointer;
+            font-size: 1rem; text-shadow: 1px 1px 0 #000;
+            touch-action: manipulation; user-select: none;
+        }
+        #btn-statistik:active { transform: translateY(2px); }
+
+        /* MODAL STATISTIK GURU: ringkasan + daftar sesi terakhir */
+        #statistik-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            color: white; z-index: 110; text-align: center; backdrop-filter: blur(5px);
+            padding: 12px;
+        }
+        .statistik-kotak {
+            background: rgba(20, 30, 50, 0.95); border: 3px solid #f1c40f; border-radius: 16px;
+            padding: 16px 18px; max-width: 560px; width: 94%; max-height: 82vh; overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .statistik-judul { color: #f1c40f; font-size: 1.5rem; margin: 0 0 10px; text-shadow: 2px 2px 0 #000; }
+        .stat-ringkasan { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 12px; }
+        .stat-kartu { background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.25); border-radius: 10px; padding: 8px 12px; min-width: 100px; }
+        .stat-kartu .angka { font-size: 1.5rem; font-weight: bold; color: #2ecc71; }
+        .stat-kartu .label { font-size: 0.8rem; color: #bbb; }
+        #tabel-riwayat { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        #tabel-riwayat th, #tabel-riwayat td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+        #tabel-riwayat th { color: #f7dc6f; font-size: 0.75rem; text-transform: uppercase; }
+        .menang { color: #2ecc71; font-weight: bold; }
+        .kalah { color: #e74c3c; }
+
         /* MODALS */
         .modal-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -363,6 +397,7 @@
         <button id="btn-fullscreen" title="Layar Penuh" onclick="toggleFullscreen()">⛶</button>
         <div class="title">Nembak Zombi</div>
         <div class="rekor-menu" id="rekor-menu"></div>
+        <button id="btn-statistik" onclick="bukaStatistik()">📊 Statistik Kelas</button>
         <div class="speed-group speed-menu">
             <span class="speed-label">Kecepatan Zombie:</span>
             <button class="speed-btn" data-k="0.5">Lambat</button>
@@ -415,6 +450,17 @@
                 <button class="topic-btn" onclick="startGame('int')">Bilangan Bulat (+/-)</button>
             </div>
             <button class="menu-btn" style="width:auto; padding:10px 20px; margin-top:20px;" onclick="backToTargetOrDiff()">Kembali</button>
+        </div>
+    </div>
+
+    <!-- MODAL STATISTIK GURU -->
+    <div id="statistik-modal">
+        <div class="statistik-kotak">
+            <h2 class="statistik-judul">📊 Statistik Kelas</h2>
+            <div class="stat-ringkasan" id="stat-ringkasan"></div>
+            <table id="tabel-riwayat"></table>
+            <button class="restart-btn-in-game" style="margin-top:14px;" onclick="tutupStatistik()">Tutup</button>
+            <button class="restart-btn-in-game" style="margin-top:14px; background:#c0392b; font-size:1.1rem; padding:10px 22px;" onclick="hapusRiwayat()">Bersihkan Riwayat 🗑</button>
         </div>
     </div>
 
@@ -691,6 +737,63 @@
         }
         tampilRekorMenu();
 
+        // --- RIWAYAT SESI UNTUK GURU ---
+        // Setiap sesi yang berakhir (menang/kalah, 1P maupun 2P) dicatat ke localStorage:
+        // waktu, pemain, skor, combo terbaik, mode, materi, dan tingkat kesulitan.
+        const KUNCI_RIWAYAT = 'nembak-zombi-riwayat';
+        const MAKS_RIWAYAT = 50;   // simpan 50 sesi terakhir agar localStorage tidak membengkak
+        const NAMA_MATERI = { add: 'Tambah', sub: 'Kurang', mul: 'Kali', div: 'Bagi', mix: 'Campur', int: 'Bulat' };
+        const NAMA_SULIT = { easy: 'Mudah', medium: 'Sedang', hard: 'Sulit' };
+        function catatSesi(pid, skor, comboTerbaik, menang) {
+            const entri = { t: Date.now(), p: pid, skor: skor, combo: comboTerbaik, menang: menang ? 1 : 0, mode: gameMode, materi: topic, sulit: difficulty };
+            try {
+                let riwayat = [];
+                const mentah = localStorage.getItem(KUNCI_RIWAYAT);
+                if (mentah) { const parsed = JSON.parse(mentah); if (Array.isArray(parsed)) riwayat = parsed; }
+                riwayat.push(entri);
+                if (riwayat.length > MAKS_RIWAYAT) riwayat = riwayat.slice(-MAKS_RIWAYAT);
+                localStorage.setItem(KUNCI_RIWAYAT, JSON.stringify(riwayat));
+            } catch (e) {}
+        }
+        function bacaRiwayat() {
+            try { const parsed = JSON.parse(localStorage.getItem(KUNCI_RIWAYAT)); if (Array.isArray(parsed)) return parsed; } catch (e) {}
+            return [];
+        }
+        function formatWaktu(ts) {
+            const d = new Date(ts);
+            const hari = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
+            const p2 = n => String(n).padStart(2, '0');
+            return `${hari} ${p2(d.getDate())}/${p2(d.getMonth()+1)} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+        }
+        function bukaStatistik() {
+            const riwayat = bacaRiwayat();
+            const total = riwayat.length;
+            const terbaik = total ? Math.max(...riwayat.map(r => r.skor || 0)) : 0;
+            const rata = total ? Math.round(riwayat.reduce((s, r) => s + (r.skor || 0), 0) / total) : 0;
+            const comboTop = total ? Math.max(...riwayat.map(r => r.combo || 0)) : 0;
+            const menang = total ? riwayat.filter(r => r.menang).length : 0;
+            document.getElementById('stat-ringkasan').innerHTML =
+                `<div class="stat-kartu"><div class="angka">${total}</div><div class="label">Sesi</div></div>` +
+                `<div class="stat-kartu"><div class="angka">${terbaik}</div><div class="label">Skor Terbaik</div></div>` +
+                `<div class="stat-kartu"><div class="angka">${rata}</div><div class="label">Rata-rata</div></div>` +
+                `<div class="stat-kartu"><div class="angka">x${comboTop}</div><div class="label">Combo Terbaik</div></div>` +
+                `<div class="stat-kartu"><div class="angka">${menang}/${total}</div><div class="label">Menang</div></div>`;
+            const terakhir = riwayat.slice(-10).reverse();
+            document.getElementById('tabel-riwayat').innerHTML = total === 0
+                ? `<tr><td style="padding:18px 8px; color:#bbb;">Belum ada sesi selesai. Riwayat muncul setelah murid menang atau kalah.</td></tr>`
+                : `<tr><th>Waktu</th><th>Pemain</th><th>Materi</th><th>Skor</th><th>Combo</th><th>Hasil</th></tr>` +
+                  terakhir.map(r =>
+                      `<tr><td>${formatWaktu(r.t)}</td><td>${r.mode === 2 ? 'P' + r.p : '—'}</td><td>${NAMA_MATERI[r.materi] || r.materi || '?'} · ${NAMA_SULIT[r.sulit] || r.sulit || '?'}</td><td><b>${r.skor}</b></td><td>x${r.combo || 0}</td><td class="${r.menang ? 'menang' : 'kalah'}">${r.menang ? 'Menang' : 'Kalah'}</td></tr>`
+                  ).join('');
+            document.getElementById('statistik-modal').style.display = 'flex';
+        }
+        function tutupStatistik() { document.getElementById('statistik-modal').style.display = 'none'; }
+        function hapusRiwayat() {
+            if (!confirm('Hapus semua riwayat statistik?')) return;
+            try { localStorage.removeItem(KUNCI_RIWAYAT); } catch (e) {}
+            bukaStatistik();   // segarkan tampilan setelah dibersihkan
+        }
+
         function restartGame() {
             isRunning = false; cancelAnimationFrame(animId);
             if (pendingStart) { clearTimeout(pendingStart); pendingStart = null; }
@@ -877,6 +980,7 @@
             }
             gameOver(isVictory) {
                 this.isOver = true; this.elFinal.innerText = this.score; this.elModal.style.display = 'flex'; this.updateRekorLine();
+                catatSesi(this.pid, this.score, this.comboTerbaik, isVictory);   // catat sesi utk statistik guru
                 if (isVictory) {
                     this.elModalTitle.innerText = "Menang"; this.elModalTitle.className = "victory-title";
                     if (!confettis.length) { fireConfetti(); updateConfetti(); }
